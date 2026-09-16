@@ -1,0 +1,16 @@
+# Configuração para o Render (https://render.com)
+# Ao ligar o repositório do GitHub, o Render lê este ficheiro e cria o serviço.
+# As variáveis TURSO_DATABASE_URL e TURSO_AUTH_TOKEN devem ser definidas
+# no painel do Render (secção Environment) — não as escreva aqui.
+services:
+  - type: web
+    name: inventario-ton
+    runtime: node
+    plan: free
+    buildCommand: npm install
+    startCommand: npm start
+    envVars:
+      - key: TURSO_DATABASE_URL
+        sync: false
+      - key: TURSO_AUTH_TOKEN
+        sync: false

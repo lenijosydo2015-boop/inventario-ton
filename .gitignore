@@ -1,0 +1,8 @@
+node_modules/
+inventario_ton.db
+inventario_ton.db-shm
+inventario_ton.db-wal
+*.log
+.DS_Store
+certs/
+backups/
