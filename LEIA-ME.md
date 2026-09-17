@@ -1,4 +1,4 @@
-# Inventário TON v2.0 — Manual de instalação e utilização
+# Inventário TON v2.7 — Manual de instalação e utilização
 
 **Gestão e inventário de materiais do armazém — Terminal Oceânico do Namibe (Sonangol D&C)**
 
@@ -39,7 +39,7 @@ Pode ser o mesmo computador que já serve o app QSSA.
 
 > **Manter o servidor ligado:** a janela do `INICIAR_SERVIDOR.bat` deve ficar aberta. Para arranque automático com o Windows, coloque um atalho do .bat na pasta Arranque (`Win+R` → `shell:startup`).
 
-**Utilizador inicial:** `admin` / `ton2026` — altere a senha em **Configurações** no primeiro acesso e crie os utilizadores da equipa em **Utilizadores**.
+**Utilizador inicial:** a conta `admin` é criada com uma senha temporária definida pela variável `INITIAL_ADMIN_PASSWORD` ou, na ausência desta, com uma senha aleatória mostrada uma única vez no registo de arranque. A troca da senha é obrigatória no primeiro acesso. Não existem senhas padrão no código.
 
 ---
 
@@ -88,11 +88,11 @@ Sem este passo, o app funciona na mesma para consultar e registar (com o servido
 
 **Cadastro** — todos os campos do levantamento + fotografia pela câmara + **assistente de classificação** (7 perguntas que sugerem o estado conforme as regras definidas).
 
-**Descarte** — pedido com motivo, parecer da área, **até 4 fotos de evidência** e confirmações obrigatórias (nº de série/autorização para Informática; avaliação de risco para QSSA/Laboratório). Administradores e responsáveis mudam o estado (Pendente → Em análise → Aprovado/Rejeitado → Descartado) e editam o **parecer QSSA** em "Ver / pareceres". Cada novo pedido e cada decisão geram **notificação** (badge vermelho no menu Descarte) para administradores e responsáveis.
+**Descarte** — pedido com motivo, parecer da área, **até 4 fotos de evidência** e confirmações obrigatórias (nº de série/autorização para Informática; avaliação de risco para QSSA/Laboratório). O Responsável de área emite o parecer da sua área e altera o estado do pedido; o perfil QSSA edita exclusivamente o parecer QSSA; o Administrador pode intervir em todo o fluxo. Cada novo pedido e cada decisão geram **notificações internas**.
 
 **Relatórios** — os 9 relatórios com **Excel .xlsx** formatado (cabeçalho institucional Sonangol, azul #0E2A47) e **PDF com logótipo** e rodapé paginado. Para usar o logótipo oficial, basta substituir o ficheiro `public/img/logo.png` no servidor.
 
-**Configurações** — **importação em massa via Excel**: descarregue o modelo, preencha (uma linha por material; folha "Valores válidos" com as listas aceites) e importe — linhas com área/estado inválidos são reportadas sem bloquear as restantes. **Importar lista de avaliação (Excel)**: importa diretamente a folha de avaliação de preços (ex.: `Avaliacao_Inventario_TON_2026.xlsx`) — as colunas são reconhecidas pelo cabeçalho (Item/Nome, Categoria, Qtd, Preço, Observações), as linhas de título e total são ignoradas, e o **preço de avaliação** de cada item fica preenchido. Escolha a área e o estado a atribuir aos itens antes de importar. Também: alterar senha e dados de teste.
+**Configurações** — Administrador e Técnico podem fazer a **importação em massa via Excel** e importar a lista de avaliação. Todos os utilizadores podem alterar a própria senha. A cópia de segurança é reservada ao Administrador. O carregamento de dados de teste foi removido do ambiente de produção.
 
 > **Preço de avaliação:** cada material tem o campo **Preço de avaliação (Kz)**, visível na lista de Materiais (coluna "Preço aval.") e na ficha (com o **Valor total = quantidade × preço**). Os relatórios em Excel/PDF incluem as colunas "Preço aval. (Kz)" e "Valor total (Kz)".
 
@@ -103,7 +103,7 @@ Sem este passo, o app funciona na mesma para consultar e registar (com o servido
 > - defina a variável **`IMAGENS_DIR`** para a pasta onde estão as imagens (ex.: a pasta original do levantamento). O `INICIAR_SERVIDOR.bat` já aponta automaticamente para `C:\Users\Jorge\Pictures\Inventario TON 2026` quando essa pasta existe.
 > - Nota: ficheiros **`.HEIC`** não são apresentados pelos navegadores — converta-os para `.jpg` se quiser vê-los na app.
 
-**Utilizadores** (só admin) — criar/desativar contas (perfis: Administrador, Técnico de inventário, Responsável de área, Consulta) e consultar o **registo de acessos** (data, utilizador, sucesso/falha, IP) — imutável.
+**Utilizadores** (só admin) — criar, ativar e desativar contas; alterar perfil e áreas; redefinir senha temporária; e consultar os registos imutáveis de **acessos** e **ações administrativas/operacionais**. Perfis disponíveis: Administrador, Técnico de inventário, Responsável de área, QSSA, Supervisor e Consulta (somente leitura).
 
 ---
 
@@ -120,16 +120,16 @@ Todos os dados estão num único ficheiro no servidor: **`inventario_ton.db`** (
 | "Offline" permanente nos telemóveis | Verificar se a janela do servidor está aberta e se o dispositivo está no Wi-Fi do TON; confirmar o endereço IP (pode mudar — convém fixar IP estático no servidor) |
 | Câmara não abre | Aplicar o passo 3.1 (opção A ou B) nesse dispositivo |
 | Porta 3000 ocupada | Iniciar com outra porta: `set PORTA=3001 && node server.js` |
-| Esqueci a senha do admin | Parar o servidor, apagar `inventario_ton.db` **só se aceitável perder dados**, ou pedir a outro admin para criar nova conta |
+| Esqueci a senha | Pedir a um Administrador para usar **Redefinir senha**. A conta receberá uma senha temporária e deverá alterá-la no primeiro acesso |
 | Node.js não encontrado | Instalar o Node.js LTS e voltar a correr o .bat |
 
 ---
 
 ---
 
-## 8. Leilão de materiais avariados/obsoletos (v2.4)
+## 8. Leilão de materiais avariados/obsoletos
 
-Novo módulo **Leilão de materiais** no menu, para os utilizadores solicitarem, ao Distinto Supervisor **Augusto Nicolau**, o **abate** (compra, com valor) ou a **atribuição** (oferta sem custo) dos materiais avariados ou obsoletos do armazém.
+O módulo **Leilão de materiais** permite aos perfis Administrador, Técnico e Responsável solicitar ao Supervisor o **abate** (compra, com valor) ou a **atribuição** (oferta sem custo) dos materiais avariados ou obsoletos do armazém.
 
 **Materiais elegíveis:** aparecem automaticamente os materiais nos estados *Avariado*, *Obsoleto*, *Para descarte* e *Sem uso / avaliar reaproveitamento*.
 
@@ -139,13 +139,13 @@ Novo módulo **Leilão de materiais** no menu, para os utilizadores solicitarem,
 3. O **cronómetro de 42 horas** de cada material começa no **primeiro lance** e conta em contagem decrescente. Enquanto o tempo corre, qualquer participante pode cobrir o valor.
 4. Terminado o tempo, fica destacado o **lance mais alto** (vencedor provável), a aguardar a decisão do Supervisor.
 
-> **Participação pela conta Convidado:** os colegas que não têm conta própria participam através do perfil **Convidado** (o mesmo utilizador partilhado, só-leitura no resto do sistema). Apenas no módulo **Leilão** este perfil pode **ver** os materiais e **fazer lances**. Cada colega deve preencher o seu **registo de participante** (nome/área/função) antes de licitar; num dispositivo partilhado, use *Alterar dados* para trocar de participante. Em materiais, descartes, relatórios e restantes módulos, o perfil Convidado continua só de consulta.
+> **Consulta/Convidado:** é um perfil estritamente de leitura, inclusive no leilão. Cada participante que faça lances deve usar a sua própria conta, garantindo autoria e rastreabilidade.
 
-**Supervisor (Augusto Nicolau):** a conta com perfil **Supervisor (leilão)** vê todos os lances de cada material e pode, a qualquer momento, **aprovar de imediato** (o que **para o cronómetro**, independentemente do valor mais alto) ou **recusar** o pedido. A aprovação pode recair sobre o lance mais alto ou sobre qualquer lance individual.
+**Supervisor:** qualquer conta ativa com perfil **Supervisor (leilão)** vê todos os lances e pode **aprovar** ou **recusar** o pedido. A identidade do Supervisor que decidiu é registada automaticamente pelo servidor.
 
-> **Conta do Supervisor:** no primeiro arranque do servidor após esta atualização, é criada automaticamente a conta **`augusto` / `ton2026`** (perfil Supervisor). Altere a senha no primeiro acesso, em *Configurações*. Só esta conta aprova/recusa no leilão. (O administrador pode criar outras contas com o perfil *Supervisor (leilão)* em *Utilizadores*.)
+> **Conta inicial do Supervisor:** numa instalação nova, é criada com a senha temporária definida em `INITIAL_SUPERVISOR_PASSWORD` ou, na ausência desta, com uma senha aleatória mostrada uma única vez no registo de arranque. A troca é obrigatória no primeiro acesso.
 
-**Proposta automática:** cada pedido aprovado gera automaticamente um **texto de proposta** dirigido ao Distinto Supervisor Augusto Nicolau, com os dados do participante (nome/área/função) e a lista dos materiais solicitados com os respetivos valores propostos (e o total, no caso de abate). O texto pode ser **copiado**, enviado por **WhatsApp** ou por **e-mail**, e as **imagens** dos materiais podem ser copiadas/partilhadas para anexar. Cada participante vê as suas propostas aprovadas; o Supervisor vê as de todos.
+**Proposta automática:** cada pedido aprovado gera automaticamente um **texto de proposta** associado ao Supervisor que tomou a decisão, com os dados do participante e os materiais/valores propostos. O texto pode ser copiado ou enviado, e cada participante vê as suas propostas aprovadas; os Supervisores veem todas.
 
 > **Nota técnica:** os lances e as decisões sincronizam entre todos os dispositivos, tal como o restante inventário (offline-first). A cópia direta de imagens e a partilha (Web Share) requerem um acesso "seguro" (localhost, HTTPS, ou a exceção do `chrome://flags` descrita no ponto 3.1); nos restantes casos a imagem abre para guardar/anexar manualmente. O envio por WhatsApp/e-mail e a cópia de texto funcionam sempre.
 
@@ -175,4 +175,17 @@ As listas extensas passam a ser **paginadas**, para não ser preciso percorrer e
 
 Em cada lista há uma barra de paginação, no topo e no fundo, com a contagem (por exemplo, «1–50 de 283»), os botões de página e a opção **Por página** (25, 50, 100 ou 200), que fica memorizada no dispositivo. Ao mudar de página, o ecrã volta ao topo, e existe um botão flutuante **↑** para voltar ao topo rapidamente. Os filtros continuam a funcionar sobre a lista completa; a exportação de relatórios em Excel/PDF inclui sempre todos os registos, não apenas a página visível.
 
-*Inventário TON v2.0 · Sonangol Distribuição e Comercialização — Terminal Oceânico do Namibe · 2026*
+## 11. Perfis, áreas e auditoria (v2.7)
+
+| Perfil | Utilização recomendada | Permissões principais |
+|---|---|---|
+| Administrador | Gestão do sistema | Acesso total, eliminação permanente, utilizadores, backup e auditoria |
+| Técnico | Equipa de inventário | Cadastro/edição, importação, movimentos, pedidos de descarte e lances; sem aprovar descartes nem estornar |
+| Responsável | Responsável operacional | Edita, movimenta, estorna e emite parecer apenas nas áreas atribuídas; participa no leilão |
+| QSSA | Avaliação de segurança | Consulta o inventário e edita exclusivamente o parecer QSSA nos descartes |
+| Supervisor | Decisão do leilão | Consulta o inventário e aprova/recusa propostas; não altera stock ou materiais |
+| Consulta | Auditoria/consulta | Somente leitura e exportação; não faz lances nem altera dados |
+
+As permissões são verificadas no servidor, inclusive durante sincronizações offline. Alterações não autorizadas são rejeitadas e identificadas ao utilizador. Sessões duram até 12 horas; alterações de perfil, áreas, estado da conta ou redefinição de senha encerram as sessões afetadas. Responsáveis existentes sem área definida recebem temporariamente **Todas — atribuir área** para não interromper a operação; o Administrador deve substituir essa marcação pelas áreas reais em **Utilizadores**.
+
+*Inventário TON v2.7 · Sonangol Distribuição e Comercialização — Terminal Oceânico do Namibe · 2026*

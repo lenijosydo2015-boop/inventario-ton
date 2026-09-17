@@ -5,7 +5,7 @@
      quando há internet e recorre à cache só quando está offline. Assim, as
      atualizações da app aparecem sozinhas, sem ficar presa a uma versão antiga.
    - Restantes recursos estáticos (ícones, vendor): CACHE-FIRST (rápidos e offline). */
-const CACHE = "inventario-ton-v2.6.1";
+const CACHE = "inventario-ton-v2.7.0";
 const SHELL = [
   "./", "./index.html", "./manifest.json",
   "./img/icone-192.png", "./img/icone-512.png", "./img/logo.png",

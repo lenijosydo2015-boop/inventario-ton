@@ -169,7 +169,7 @@ tr:hover td{background:#F7FAFC}
     <label>Utilizador</label><input id="loginUser" autocomplete="username">
     <label>Senha</label><input id="loginPass" type="password" autocomplete="current-password">
     <div style="margin-top:16px"><button class="btn" style="width:100%" onclick="entrar()">Entrar</button></div>
-    <div class="aviso" id="avisoLogin">Primeiro acesso: <b>admin / ton2026</b>. Altere a senha em Configurações.</div>
+    <div class="aviso" id="avisoLogin">Use as credenciais individuais fornecidas pelo Administrador.</div>
   </div>
 </div>
 
@@ -284,7 +284,7 @@ tr:hover td{background:#F7FAFC}
 
 <section class="vista" id="v-config">
   <div class="cabecVista"><h2>Configurações</h2></div>
-  <div class="painel"><h3>Importação em massa via Excel</h3>
+  <div class="painel" id="configImport"><h3>Importação em massa via Excel</h3>
     <p style="font-size:14px;color:var(--cinza);margin-bottom:10px">Descarregue o modelo, preencha uma linha por material e importe — ideal para o carregamento inicial do inventário do armazém.</p>
     <div class="acoesForm" style="margin-top:0">
       <button class="btn-sec" onclick="descarregarModelo()">Descarregar modelo (.xlsx)</button>
@@ -293,7 +293,7 @@ tr:hover td{background:#F7FAFC}
     </div>
     <div id="resImport" style="margin-top:10px;font-size:14px"></div>
   </div>
-  <div class="painel"><h3>Importar lista de avaliação (Excel)</h3>
+  <div class="painel" id="configImportAval"><h3>Importar lista de avaliação (Excel)</h3>
     <p style="font-size:14px;color:var(--cinza);margin-bottom:10px">Importe a folha de avaliação de preços (ex.: <b>Avaliacao_Inventario_TON_2026.xlsx</b>). Cada linha torna-se um material com o <b>preço de avaliação</b> preenchido. As colunas são detetadas pelo cabeçalho (<i>Item/Nome, Categoria, Qtd, Preço, Observações</i>) — linhas de título e total são ignoradas.</p>
     <p style="font-size:13px;color:var(--cinza);margin-bottom:8px">A <b>área</b> é atribuída automaticamente pela categoria (ex.: <i>Informatica → Informática</i>, <i>EPI/EPC/Placas → QSSA</i>, <i>Equipamento/Cabos → Manutenção</i>, <i>Material Escritório → Administração</i>). A imagem de cada item fica ligada ao seu nome (clicável na lista de Materiais).</p>
     <div class="formGrelha">
@@ -306,17 +306,14 @@ tr:hover td{background:#F7FAFC}
     </div>
     <div id="resAval" style="margin-top:10px;font-size:14px"></div>
   </div>
-  <div class="painel"><h3>Alterar a minha senha</h3>
+  <div class="painel" id="configSenha"><h3>Alterar a minha senha</h3>
     <div class="formGrelha">
-      <div><label>Nova senha (mín. 6 caracteres)</label><input id="novaSenha" type="password"></div>
+      <div><label>Nova senha (mín. 10 caracteres)</label><input id="novaSenha" type="password" autocomplete="new-password"></div>
       <div style="align-self:end"><button class="btn-sec" onclick="alterarSenha()">Alterar senha</button></div>
     </div>
   </div>
-  <div class="painel"><h3>Dados de teste</h3>
-    <button class="btn-sec" onclick="carregarDadosTeste()">Carregar 8 materiais de exemplo</button>
-  </div>
-  <div class="painel"><h3>Cópia de segurança central</h3>
-    <p style="font-size:14px;color:var(--cinza)">Os dados de todos os utilizadores estão centralizados no servidor, no ficheiro <b>inventario_ton.db</b> (pasta do aplicativo). Copie esse ficheiro regularmente para pen/OneDrive/pasta de rede — é o backup completo do sistema.</p>
+  <div class="painel" id="configBackup"><h3>Cópia de segurança central</h3>
+    <p style="font-size:14px;color:var(--cinza)">Os dados estão centralizados na base de dados do servidor. O Administrador deve manter cópias de segurança regulares na plataforma de alojamento da base de dados.</p>
   </div>
 </section>
 
@@ -331,21 +328,24 @@ tr:hover td{background:#F7FAFC}
         <option value="admin">Administrador</option>
         <option value="tecnico">Técnico de inventário</option>
         <option value="responsavel">Responsável de área</option>
+        <option value="qssa">QSSA</option>
         <option value="supervisor">Supervisor (leilão)</option>
-        <option value="consulta">Consulta / visualizador</option>
+        <option value="consulta">Consulta (somente leitura)</option>
       </select></div>
+      <div><label>Áreas atribuídas</label><select id="uAreas" multiple size="5"></select>
     </div>
     <div class="acoesForm"><button class="btn" onclick="criarUser()">Criar utilizador</button></div>
   </div>
   <div class="painel"><h3>Utilizadores</h3><div class="tabelaScroll" id="listaUsers"></div></div>
   <div class="painel"><h3>Registo de acessos (últimos 300 — imutável)</h3><div class="tabelaScroll" id="listaLogins"></div></div>
+  <div class="painel"><h3>Auditoria de ações (últimas 300 — imutável)</h3><div class="tabelaScroll" id="listaAuditoria"></div></div>
 </section>
 
 <section class="vista" id="v-leilao">
   <div class="cabecVista"><h2>Leilão de materiais</h2>
     <button class="btn-sec btn-mini" onclick="sincronizar(true)">Sincronizar agora</button>
   </div>
-  <div class="painel"><p style="font-size:14px;color:var(--cinza);margin:0">Leilão de materiais avariados ou obsoletos do armazém. Registe-se como participante e apresente lances de <b>abate</b> (compra, com valor) ou pedidos de <b>atribuição</b> (oferta sem custo). O cronómetro de 42h começa no primeiro lance de cada material; no fim, destaca-se o lance mais alto. O Distinto Supervisor Augusto Nicolau vê os lances, aprova (parando o cronómetro) ou recusa, e os pedidos aprovados geram automaticamente a proposta para envio.</p></div>
+  <div class="painel"><p style="font-size:14px;color:var(--cinza);margin:0">Leilão de materiais avariados ou obsoletos do armazém. Os perfis autorizados podem apresentar lances de <b>abate</b> (compra, com valor) ou pedidos de <b>atribuição</b> (oferta sem custo). O cronómetro de 42h começa no primeiro lance; o Supervisor que tomar a decisão fica identificado na proposta e no registo de auditoria.</p></div>
   <div class="painel" id="painelParticipante"></div>
   <div id="avisoSupervisor"></div>
   <div class="leilaoBarra">
@@ -404,10 +404,9 @@ tr:hover td{background:#F7FAFC}
 const AREAS=["Manutenção","Laboratório","QSSA","Movimentação de Produtos","SISE","Informática","Administração","Outra"];
 const ESTADOS=["Novo","Bom","Usado","Sem uso / avaliar reaproveitamento","Avariado","Obsoleto","Para descarte"];
 const COR_ESTADO={"Novo":"et-verde","Bom":"et-verde","Usado":"et-azul","Sem uso / avaliar reaproveitamento":"et-amarelo","Avariado":"et-laranja","Obsoleto":"et-laranja","Para descarte":"et-vermelho"};
-const PERFIS={admin:"Administrador",tecnico:"Técnico de inventário",responsavel:"Responsável de área",supervisor:"Supervisor (leilão)",consulta:"Consulta / visualizador"};
+const PERFIS={admin:"Administrador",tecnico:"Técnico de inventário",responsavel:"Responsável de área",qssa:"QSSA",supervisor:"Supervisor (leilão)",consulta:"Consulta (somente leitura)"};
 const ESTADOS_LEILAO=["Avariado","Obsoleto","Para descarte","Sem uso / avaliar reaproveitamento"];
 const DURACAO_LEILAO_H=42;
-const SUPERVISOR_NOME="Augusto Nicolau";
 let db=null, sessao=null, materialEdicao=null, fotoAtual=null;
 
 const novoUuid=()=> (crypto.randomUUID?crypto.randomUUID():
@@ -470,6 +469,12 @@ async function sincronizar(manual){
     const alteracoes={materiais:[],descartes:[],movimentos:[],notificacoes:[],lances:[],leiloes:[],movstock:[]};
     fila.forEach(f=>alteracoes[f.tabela]&&alteracoes[f.tabela].push(f.registo));
     const r=await api("/api/sync",{desde:localStorage.ultimoSync||"",alteracoes});
+    if(r.usuario){
+      const perfilMudou=sessao.perfil!==r.usuario.perfil||JSON.stringify(sessao.areas||[])!==JSON.stringify(r.usuario.areas||[]);
+      sessao=r.usuario;
+      localStorage.usuario=JSON.stringify(sessao);
+      if(perfilMudou){montarMenu();aplicarVisibilidadeConfig();}
+    }
     for(const f of fila)await dbDel("fila",f.id);
     for(const c of r.codigosAtribuidos||[]){
       const m=await dbGet("materiais",c.uuid);
@@ -484,7 +489,8 @@ async function sincronizar(manual){
     for(const e of r.dados.eliminados||[]){await dbDel("materiais",e.uuid);}
     localStorage.ultimoSync=r.agora;
     pintarEstadoSync("online","Sincronizado");
-    if(manual)flash("Sincronização concluída.");
+    if((r.rejeitados||[]).length)flash(`${r.rejeitados.length} alteração(ões) rejeitada(s) por falta de permissão.`);
+    else if(manual)flash("Sincronização concluída.");
     atualizarCrachaNotif();
     const vistaAtiva=document.querySelector(".vista.ativa");
     if(vistaAtiva)refrescarVista(vistaAtiva.id);
@@ -528,7 +534,13 @@ async function entrar(){
 function entrarNaApp(){
   document.getElementById("telaLogin").style.display="none";
   document.getElementById("app").style.display="block";
-  montarMenu(); preencherSelects(); mostrarVista("v-dashboard"); sincronizar();
+  montarMenu(); preencherSelects(); aplicarVisibilidadeConfig();
+  if(sessao.trocarSenha){
+    flash("Altere a senha temporária para continuar.");
+    mostrarVista("v-config");
+  }else{
+    mostrarVista("v-dashboard"); sincronizar();
+  }
 }
 async function sair(){
   try{await api("/api/logout",{},"POST");}catch(e){}
@@ -536,19 +548,24 @@ async function sair(){
   location.reload();
 }
 const pode={
-  editar:()=>["admin","tecnico","responsavel"].includes(sessao.perfil),
-  aprovar:()=>["admin","responsavel"].includes(sessao.perfil),
+  area:area=>sessao.perfil!=="responsavel"||(sessao.areas||[]).includes("*")||(sessao.areas||[]).includes(area),
+  editar:area=>["admin","tecnico","responsavel"].includes(sessao.perfil)&&(sessao.perfil!=="responsavel"||(area===undefined?(sessao.areas||[]).length>0:pode.area(area))),
+  aprovar:area=>["admin","responsavel"].includes(sessao.perfil)&&(area===undefined||pode.area(area)),
+  parecerQSSA:()=>["admin","qssa"].includes(sessao.perfil),
   eliminar:()=>sessao.perfil==="admin",
   gerirUsers:()=>sessao.perfil==="admin",
-  licitar:()=>["admin","tecnico","responsavel","consulta"].includes(sessao.perfil),
+  importar:()=>["admin","tecnico"].includes(sessao.perfil),
+  licitar:()=>["admin","tecnico","responsavel"].includes(sessao.perfil),
   supervisionar:()=>sessao.perfil==="supervisor",
-  moverStock:()=>["admin","tecnico","responsavel"].includes(sessao.perfil)
+  moverStock:area=>["admin","tecnico","responsavel"].includes(sessao.perfil)&&(sessao.perfil!=="responsavel"||(area===undefined?(sessao.areas||[]).length>0:pode.area(area)))
 };
 
 /* ================= NAVEGAÇÃO ================= */
 function montarMenu(){
-  const itens=[["v-dashboard","Painel geral"],["v-materiais","Materiais"],["v-movstock","Movimentos de stock"],["v-descarte","Descarte"],["v-leilao","Leilão de materiais"],["v-relatorios","Relatórios"],["v-config","Configurações"]];
-  if(pode.gerirUsers())itens.push(["v-users","Utilizadores"]);
+  const itens=sessao.trocarSenha
+    ? [["v-config","Alterar senha"]]
+    : [["v-dashboard","Painel geral"],["v-materiais","Materiais"],["v-movstock","Movimentos de stock"],["v-descarte","Descarte"],["v-leilao","Leilão de materiais"],["v-relatorios","Relatórios"],["v-config","Configurações"]];
+  if(!sessao.trocarSenha&&pode.gerirUsers())itens.push(["v-users","Utilizadores"]);
   document.getElementById("menu").innerHTML=itens.map(([id,nm])=>{
     let badge="";
     if(id==="v-descarte")badge='<span class="crachá" id="crachaNotif" style="display:none"></span>';
@@ -566,6 +583,9 @@ function refrescarVista(id){
   if(id==="v-users")renderUsers();
 }
 function mostrarVista(id){
+  if(sessao.trocarSenha&&id!=="v-config")id="v-config";
+  if(id==="v-users"&&!pode.gerirUsers())id="v-dashboard";
+  if(id==="v-cadastro"&&!pode.editar())id="v-materiais";
   document.querySelectorAll(".vista").forEach(v=>v.classList.remove("ativa"));
   document.getElementById(id).classList.add("ativa");
   document.querySelectorAll("#menu button").forEach(b=>b.classList.toggle("ativo",b.dataset.v===id));
@@ -576,18 +596,34 @@ function mostrarVista(id){
   refrescarVista(id);
 }
 function preencherSelects(){
-  document.getElementById("mArea").innerHTML=AREAS.map(a=>`<option>${a}</option>`).join("");
+  const areasEdicao=sessao.perfil==="responsavel"&&!(sessao.areas||[]).includes("*")?(sessao.areas||[]):AREAS;
+  document.getElementById("mArea").innerHTML=areasEdicao.map(a=>`<option>${a}</option>`).join("");
   document.getElementById("mEstado").innerHTML=ESTADOS.map(e=>`<option>${e}</option>`).join("");
   document.getElementById("fArea").innerHTML='<option value="">Todas as áreas</option>'+AREAS.map(a=>`<option>${a}</option>`).join("");
   document.getElementById("fEstado").innerHTML='<option value="">Todos os estados</option>'+ESTADOS.map(e=>`<option>${e}</option>`).join("");
   const ia=document.getElementById("impAvalArea"),ie=document.getElementById("impAvalEstado");
   if(ia)ia.innerHTML=AREAS.map(a=>`<option${a==="Outra"?" selected":""}>${a}</option>`).join("");
   if(ie)ie.innerHTML=ESTADOS.map(e=>`<option${e==="Usado"?" selected":""}>${e}</option>`).join("");
+  const ua=document.getElementById("uAreas");
+  if(ua)ua.innerHTML='<option value="*">Todas as áreas (transição)</option>'+AREAS.map(a=>`<option>${a}</option>`).join("");
+  const up=document.getElementById("uPerfil");
+  if(up){up.onchange=atualizarCamposPerfil;atualizarCamposPerfil();}
+}
+function aplicarVisibilidadeConfig(){
+  for(const id of ["configImport","configImportAval"]){const el=document.getElementById(id);if(el)el.style.display=pode.importar()&&!sessao.trocarSenha?"block":"none";}
+  const b=document.getElementById("configBackup");if(b)b.style.display=pode.gerirUsers()&&!sessao.trocarSenha?"block":"none";
+}
+function atualizarCamposPerfil(){
+  const perfil=document.getElementById("uPerfil")?.value,areas=document.getElementById("uAreas");
+  if(!areas)return;
+  areas.disabled=!["responsavel","qssa"].includes(perfil);
+  if(perfil==="qssa")for(const o of areas.options)o.selected=o.value==="QSSA";
+  if(!["responsavel","qssa"].includes(perfil))for(const o of areas.options)o.selected=false;
 }
 
 /* ================= NOTIFICAÇÕES ================= */
 async function criarNotificacao(texto,ligacao,paraPerfis){
-  await guardarEEnviar("notificacoes",{uuid:novoUuid(),paraPerfis:JSON.stringify(paraPerfis||["admin","responsavel"]),
+  await guardarEEnviar("notificacoes",{uuid:novoUuid(),paraPerfis:JSON.stringify(paraPerfis||["admin","responsavel","qssa"]),
     texto,ligacao:ligacao||"v-descarte",lidaPor:"[]",data:agora(),atualizadoEm:agora()});
 }
 async function notifNaoLidas(ligacao){
@@ -614,7 +650,7 @@ async function marcarNotifLidas(ligacao){
 /* ================= MATERIAIS ================= */
 const vivos=async()=> (await dbAll("materiais")).filter(m=>!m.apagado);
 async function abrirCadastro(mat){
-  if(!pode.editar()){flash("O seu perfil não permite cadastrar materiais.");return;}
+  if(!pode.editar(mat?.area)){flash("O seu perfil não permite cadastrar ou editar materiais desta área.");return;}
   materialEdicao=mat||null; fotoAtual=mat?mat.foto||null:null;
   document.getElementById("tituloCadastro").textContent=mat?"Editar material "+(mat.codigo||""):"Novo material";
   const v=(id,val)=>document.getElementById(id).value=val??"";
@@ -672,6 +708,7 @@ async function registarMovimento(m,tipo,detalhe){
 }
 async function guardarMaterial(){
   const g=id=>document.getElementById(id).value.trim();
+  if(!pode.editar(g("mArea"))){flash("Sem permissão para guardar materiais desta área.");return;}
   if(!g("mNome")){flash("Indique o nome do material.");return;}
   const novo=!materialEdicao;
   const m={...(materialEdicao||{uuid:novoUuid(),codigo:null,criadoPor:sessao.nome,criadoEm:agora(),apagado:0}),
@@ -687,6 +724,7 @@ async function guardarMaterial(){
 }
 async function renderMateriais(){
   const mats=await vivos();
+  const btnNovo=document.getElementById("btnNovoMat");if(btnNovo)btnNovo.style.display=pode.editar()?"inline-block":"none";
   const locs=[...new Set(mats.map(m=>m.local).filter(Boolean))].sort();
   const fl=document.getElementById("fLocal"),valAtual=fl.value;
   fl.innerHTML='<option value="">Todas as localizações</option>'+locs.map(l=>`<option${l===valAtual?" selected":""}>${esc(l)}</option>`).join("");
@@ -712,9 +750,9 @@ async function renderMateriais(){
       <td style="white-space:nowrap">
         <button class="btn-sec btn-mini" onclick="verDetalhes('${m.uuid}')">Ver</button>
         <button class="btn-sec btn-mini" onclick="fichaKardex('${m.uuid}')" title="Ficha / kardex do material">Ficha</button>
-        ${pode.moverStock()?`<button class="btn-verde btn-mini" onclick="movStockRapido('${m.uuid}','Entrada')">+ Entrada</button>
+        ${pode.moverStock(m.area)?`<button class="btn-verde btn-mini" onclick="movStockRapido('${m.uuid}','Entrada')">+ Entrada</button>
         <button class="btn-vermelho btn-mini" onclick="movStockRapido('${m.uuid}','Saída')">− Saída</button>`:""}
-        ${pode.editar()?`<button class="btn-sec btn-mini" onclick="editarMat('${m.uuid}')">Editar</button>
+        ${pode.editar(m.area)?`<button class="btn-sec btn-mini" onclick="editarMat('${m.uuid}')">Editar</button>
         <button class="btn-vermelho btn-mini" onclick="pedirDescarte('${m.uuid}')">Descarte</button>`:""}
         ${m.codigo?`<button class="btn-sec btn-mini" onclick="etiquetaUm('${m.uuid}')">🏷️</button>`:""}
         ${pode.eliminar()?`<button class="btn-vermelho btn-mini" onclick="eliminarMaterial('${m.uuid}')" title="Eliminar permanentemente (apenas administrador)">🗑️ Eliminar</button>`:""}
@@ -753,7 +791,7 @@ async function verDetalhes(u){
     ${L("Última atualização",dataHoraPT(m.atualizadoEm))}
     <h3 style="margin-top:14px;font-size:14px">Histórico de movimentações (imutável)</h3>
     ${movs.length?movs.map(v=>`<div class="detLinha"><b>${dataHoraPT(v.data)}</b><span>${esc(v.tipo)} — ${esc(v.detalhe)} (${esc(v.usuario)})</span></div>`).join(""):'<div class="detLinha"><span>Sem registos.</span></div>'}
-    <div class="acoesForm"><button class="btn-sec" onclick="fichaKardex('${m.uuid}')">📒 Ficha / kardex</button>${pode.moverStock()?`<button class="btn-verde" onclick="movStockRapido('${m.uuid}','Entrada')">+ Entrada</button><button class="btn-vermelho" onclick="movStockRapido('${m.uuid}','Saída')">− Saída</button>`:""}${m.codigo?`<button class="btn-sec" onclick="etiquetaUm('${m.uuid}')">🏷️ Etiqueta QR</button>`:""}${pode.eliminar()?`<button class="btn-vermelho" onclick="eliminarMaterial('${m.uuid}')">🗑️ Eliminar permanentemente</button>`:""}<button class="btn-sec" onclick="fecharModal()">Fechar</button></div>`;
+    <div class="acoesForm"><button class="btn-sec" onclick="fichaKardex('${m.uuid}')">📒 Ficha / kardex</button>${pode.moverStock(m.area)?`<button class="btn-verde" onclick="movStockRapido('${m.uuid}','Entrada')">+ Entrada</button><button class="btn-vermelho" onclick="movStockRapido('${m.uuid}','Saída')">− Saída</button>`:""}${m.codigo?`<button class="btn-sec" onclick="etiquetaUm('${m.uuid}')">🏷️ Etiqueta QR</button>`:""}${pode.eliminar()?`<button class="btn-vermelho" onclick="eliminarMaterial('${m.uuid}')">🗑️ Eliminar permanentemente</button>`:""}<button class="btn-sec" onclick="fecharModal()">Fechar</button></div>`;
   document.getElementById("modalDet").classList.add("aberto");
 }
 function fecharModal(){pararScanner();document.getElementById("modalDet").classList.remove("aberto");}
@@ -774,6 +812,7 @@ async function abrirImagem(u){
 let fotosExtraTemp=[];
 async function pedirDescarte(u){
   const m=await dbGet("materiais",u);
+  if(!pode.editar(m?.area)){flash("Sem permissão para pedir o descarte deste material.");return;}
   fotosExtraTemp=[];
   const exigeSerie=m.area==="Informática", exigeRisco=["QSSA","Laboratório"].includes(m.area);
   document.getElementById("modalConteudo").innerHTML=
@@ -828,14 +867,14 @@ async function renderDescartes(){
       <td><span class="etiqueta ${corPed[d.estadoPedido]}">${esc(d.estadoPedido)}</span></td>
       <td style="white-space:nowrap">
         <button class="btn-sec btn-mini" onclick="verPedido('${d.uuid}')">Ver / pareceres</button>
-        ${pode.aprovar()?`<select onchange="mudarEstadoDescarte('${d.uuid}',this.value)" style="min-width:118px;margin-top:4px">
+        ${pode.aprovar(d.area)?`<select onchange="mudarEstadoDescarte('${d.uuid}',this.value)" style="min-width:118px;margin-top:4px">
           ${["Pendente","Em análise","Aprovado","Rejeitado","Descartado"].map(e=>`<option${e===d.estadoPedido?" selected":""}>${e}</option>`).join("")}</select>`:""}
       </td></tr>`).join("")+`</tbody></table>`+barP;
 }
 async function verPedido(u){
   const d=await dbGet("descartes",u);
   const fotos=JSON.parse(d.fotosExtra||"[]");
-  const editavel=pode.aprovar();
+  const edArea=pode.aprovar(d.area),edQssa=pode.parecerQSSA();
   const L=(r,v)=>`<div class="detLinha"><b>${r}</b><span>${v||"—"}</span></div>`;
   document.getElementById("modalConteudo").innerHTML=
     `<h3>Pedido de descarte — ${esc(d.codigo)||esc(d.nome)}</h3>
@@ -844,20 +883,20 @@ async function verPedido(u){
     ${L("Solicitado",dataHoraPT(d.dataSolicitacao)+" por "+esc(d.solicitante))}
     ${L("Estado do pedido",esc(d.estadoPedido))}
     <label>Parecer do responsável da área</label>
-    <textarea id="pArea" rows="2" ${editavel?"":"disabled"}>${esc(d.parecerArea)}</textarea>
+    <textarea id="pArea" rows="2" ${edArea?"":"disabled"}>${esc(d.parecerArea)}</textarea>
     <label>Parecer QSSA</label>
-    <textarea id="pQSSA" rows="2" ${editavel?"":"disabled"}>${esc(d.parecerQSSA)}</textarea>
+    <textarea id="pQSSA" rows="2" ${edQssa?"":"disabled"}>${esc(d.parecerQSSA)}</textarea>
     ${fotos.length?'<label>Evidências fotográficas</label><div class="miniFotos">'+fotos.map(f=>`<img src="${f}" onclick="window.open('${f}')">`).join("")+"</div>":""}
     <div class="acoesForm">
-      ${editavel?`<button class="btn" onclick="guardarPareceres('${u}')">Guardar pareceres</button>`:""}
+      ${edArea||edQssa?`<button class="btn" onclick="guardarPareceres('${u}')">Guardar parecer autorizado</button>`:""}
       <button class="btn-sec" onclick="fecharModal()">Fechar</button>
     </div>`;
   document.getElementById("modalDet").classList.add("aberto");
 }
 async function guardarPareceres(u){
   const d=await dbGet("descartes",u);
-  d.parecerArea=document.getElementById("pArea").value.trim();
-  d.parecerQSSA=document.getElementById("pQSSA").value.trim();
+  if(pode.aprovar(d.area))d.parecerArea=document.getElementById("pArea").value.trim();
+  if(pode.parecerQSSA())d.parecerQSSA=document.getElementById("pQSSA").value.trim();
   d.atualizadoEm=agora();
   await guardarEEnviar("descartes",d);
   await registarMovimento({uuid:d.materialUuid,codigo:d.codigo,nome:d.nome},"Parecer registado","Pareceres do pedido de descarte atualizados");
@@ -865,6 +904,7 @@ async function guardarPareceres(u){
 }
 async function mudarEstadoDescarte(u,novo){
   const d=await dbGet("descartes",u);
+  if(!pode.aprovar(d?.area)){flash("Sem permissão para alterar este pedido.");return;}
   d.estadoPedido=novo;d.atualizadoEm=agora();
   await guardarEEnviar("descartes",d);
   if(novo==="Rejeitado"){
@@ -1219,6 +1259,7 @@ async function descarregarModelo(){
   descarregarBlob("Modelo_Importacao_Inventario_TON.xlsx",new Blob([buf]));
 }
 async function importarExcel(input){
+  if(!pode.importar()){flash("O seu perfil não permite importar materiais.");input.value="";return;}
   const f=input.files[0];if(!f)return;
   const res=document.getElementById("resImport");
   res.textContent="A processar…";
@@ -1267,6 +1308,7 @@ function areaPorCategoria(cat,fallback){
 
 /* ---- Importar a lista de avaliação (deteta colunas pelo cabeçalho) ---- */
 async function importarAvaliacao(input){
+  if(!pode.importar()){flash("O seu perfil não permite importar materiais.");input.value="";return;}
   const f=input.files[0];if(!f)return;
   const res=document.getElementById("resAval");res.textContent="A processar…";
   try{
@@ -1334,8 +1376,10 @@ async function importarAvaliacao(input){
 /* ================= CONFIG / UTILIZADORES ================= */
 async function alterarSenha(){
   const ns=document.getElementById("novaSenha").value;
-  try{await api("/api/alterar-senha",{novaSenha:ns});
-    document.getElementById("novaSenha").value="";flash("Senha alterada com segurança (bcrypt).");
+  try{const r=await api("/api/alterar-senha",{novaSenha:ns});
+    document.getElementById("novaSenha").value="";
+    if(r.reautenticar){localStorage.removeItem("token");localStorage.removeItem("usuario");alert("Senha alterada. Entre novamente com a nova senha.");location.reload();return;}
+    flash("Senha alterada com segurança.");
   }catch(e){flash(e.message==="Failed to fetch"?"A alteração de senha exige ligação ao servidor.":e.message);}
 }
 async function carregarDadosTeste(){
@@ -1345,32 +1389,63 @@ async function carregarDadosTeste(){
 }
 async function criarUser(){
   const g=id=>document.getElementById(id).value.trim();
+  const areas=[...document.getElementById("uAreas").selectedOptions].map(o=>o.value);
   try{
-    await api("/api/usuarios",{nome:g("uNome"),login:g("uLogin"),senha:document.getElementById("uSenha").value,perfil:g("uPerfil")});
+    await api("/api/usuarios",{nome:g("uNome"),login:g("uLogin"),senha:document.getElementById("uSenha").value,perfil:g("uPerfil"),areas});
     ["uNome","uLogin","uSenha"].forEach(i=>document.getElementById(i).value="");
     flash("Utilizador criado.");renderUsers();
   }catch(e){flash(e.message==="Failed to fetch"?"A gestão de utilizadores exige ligação ao servidor.":e.message);}
 }
+let usersAtuais=[];
 async function renderUsers(){
   try{
-    const users=await api("/api/usuarios");
+    const users=await api("/api/usuarios");usersAtuais=users;
     document.getElementById("listaUsers").innerHTML=
-      `<table><thead><tr><th>Nome</th><th>Login</th><th>Perfil</th><th>Estado</th><th></th></tr></thead><tbody>`+
-      users.map(u=>`<tr><td>${esc(u.nome)}</td><td>${esc(u.login)}</td><td>${PERFIS[u.perfil]}</td>
+      `<table><thead><tr><th>Nome</th><th>Login</th><th>Perfil</th><th>Áreas</th><th>Estado</th><th></th></tr></thead><tbody>`+
+      users.map(u=>`<tr><td>${esc(u.nome)}${u.trocarSenha?' <span class="etiqueta et-amarelo">troca de senha pendente</span>':""}</td><td>${esc(u.login)}</td><td>${PERFIS[u.perfil]||esc(u.perfil)}</td>
+        <td>${esc((u.areas||[]).map(a=>a==="*"?"Todas — atribuir área":a).join(", "))||"—"}</td>
         <td><span class="etiqueta ${u.ativo?"et-verde":"et-cinza"}">${u.ativo?"Ativo":"Inativo"}</span></td>
-        <td>${u.id!==sessao.id?`<button class="btn-sec btn-mini" onclick="alternarUser(${u.id},${u.ativo?0:1})">${u.ativo?"Desativar":"Reativar"}</button>`:'<span class="etiqueta et-azul">Sessão atual</span>'}</td></tr>`).join("")+`</tbody></table>`;
+        <td style="white-space:nowrap"><button class="btn-sec btn-mini" onclick="abrirGestaoUser(${u.id})">Perfil/áreas</button><button class="btn-sec btn-mini" onclick="redefinirSenhaUser(${u.id})">Redefinir senha</button>${u.id!==sessao.id?`<button class="btn-sec btn-mini" onclick="alternarUser(${u.id},${u.ativo?0:1})">${u.ativo?"Desativar":"Reativar"}</button>`:' <span class="etiqueta et-azul">Sessão atual</span>'}</td></tr>`).join("")+`</tbody></table>`;
     const logins=await api("/api/logins");
     const infoP=aplicarPaginacao("logins",logins);
     const barP=barraPaginacao("logins",infoP);
     document.getElementById("listaLogins").innerHTML=
-      barP+`<table><thead><tr><th>Data/hora</th><th>Login</th><th>Resultado</th><th>IP</th></tr></thead><tbody>`+
-      infoP.slice.map(l=>`<tr><td>${dataHoraPT(l.data)}</td><td>${esc(l.login)}</td>
+      barP+`<table><thead><tr><th>Data/hora</th><th>Login</th><th>Perfil</th><th>Resultado</th><th>IP</th></tr></thead><tbody>`+
+      infoP.slice.map(l=>`<tr><td>${dataHoraPT(l.data)}</td><td>${esc(l.login)}</td><td>${esc(PERFIS[l.perfil]||l.perfil)||"—"}</td>
         <td><span class="etiqueta ${l.sucesso?"et-verde":"et-vermelho"}">${l.sucesso?"Sucesso":"Falhou"}</span></td>
         <td>${esc(l.ip)}</td></tr>`).join("")+`</tbody></table>`+barP;
+    const auditoria=await api("/api/auditoria");
+    const infoA=aplicarPaginacao("auditoria",auditoria),barA=barraPaginacao("auditoria",infoA);
+    document.getElementById("listaAuditoria").innerHTML=barA+`<table><thead><tr><th>Data/hora</th><th>Utilizador</th><th>Ação</th><th>Entidade</th><th>Área</th><th>Detalhe</th><th>IP</th></tr></thead><tbody>`+
+      infoA.slice.map(a=>`<tr><td>${dataHoraPT(a.data)}</td><td>${esc(a.login)}<br><span style="font-size:12px;color:var(--cinza)">${esc(PERFIS[a.perfil]||a.perfil)}</span></td><td>${esc(a.acao)}</td><td>${esc(a.entidade)}${a.entidadeUuid?`<br><span style="font-size:11px;color:var(--cinza)">${esc(a.entidadeUuid)}</span>`:""}</td><td>${esc(a.area)||"—"}</td><td>${esc(a.detalhe)||"—"}</td><td>${esc(a.ip)}</td></tr>`).join("")+`</tbody></table>`+barA;
   }catch(e){
     document.getElementById("listaUsers").innerHTML='<div class="vazio">A gestão de utilizadores e a auditoria exigem ligação ao servidor.</div>';
     document.getElementById("listaLogins").innerHTML="";
+    document.getElementById("listaAuditoria").innerHTML="";
   }
+}
+function abrirGestaoUser(id){
+  const u=usersAtuais.find(x=>x.id===id);if(!u)return;
+  const opPerf=Object.entries(PERFIS).map(([v,n])=>`<option value="${v}"${v===u.perfil?" selected":""}>${n}</option>`).join("");
+  const opAreas=['*',...AREAS].map(a=>`<option value="${a}"${(u.areas||[]).includes(a)?" selected":""}>${a==="*"?"Todas as áreas (transição)":a}</option>`).join("");
+  document.getElementById("modalConteudo").innerHTML=`<h3>Perfil e áreas — ${esc(u.nome)}</h3><label>Perfil</label><select id="ePerfil" onchange="atualizarCamposEdicaoPerfil()">${opPerf}</select><label>Áreas atribuídas</label><select id="eAreas" multiple size="8">${opAreas}</select><p style="font-size:12.5px;color:var(--cinza)">As áreas são aplicadas ao perfil Responsável. O perfil QSSA fica automaticamente associado à área QSSA. A alteração encerra as sessões abertas do utilizador.</p><div class="acoesForm"><button class="btn" onclick="guardarGestaoUser(${u.id})">Guardar</button><button class="btn-sec" onclick="fecharModal()">Cancelar</button></div>`;
+  document.getElementById("modalDet").classList.add("aberto");atualizarCamposEdicaoPerfil();
+}
+function atualizarCamposEdicaoPerfil(){
+  const p=document.getElementById("ePerfil")?.value,a=document.getElementById("eAreas");if(!a)return;
+  a.disabled=!["responsavel","qssa"].includes(p);
+  if(p==="qssa")for(const o of a.options)o.selected=o.value==="QSSA";
+  if(!["responsavel","qssa"].includes(p))for(const o of a.options)o.selected=false;
+}
+async function guardarGestaoUser(id){
+  const perfil=document.getElementById("ePerfil").value,areas=[...document.getElementById("eAreas").selectedOptions].map(o=>o.value);
+  try{await api("/api/usuarios/"+id,{perfil,areas},"PUT");fecharModal();flash("Perfil e áreas atualizados.");renderUsers();}catch(e){flash(e.message);}
+}
+async function redefinirSenhaUser(id){
+  const u=usersAtuais.find(x=>x.id===id);if(!u)return;
+  const senha=prompt("Defina uma senha temporária com pelo menos 10 caracteres para "+u.nome+". O utilizador terá de a alterar no próximo acesso.");
+  if(senha===null)return;
+  try{await api("/api/usuarios/"+id+"/redefinir-senha",{senha});flash("Senha temporária definida e sessões encerradas.");renderUsers();}catch(e){flash(e.message);}
 }
 async function alternarUser(id,ativo){
   try{await api("/api/usuarios/"+id+"/estado",{ativo});flash(ativo?"Utilizador reativado.":"Utilizador desativado.");renderUsers();}
@@ -1379,8 +1454,9 @@ async function alternarUser(id,ativo){
 
 
 /* ================= LEILÃO DE MATERIAIS ================= */
-function participante(){ try{return JSON.parse(localStorage.participanteLeilao||"null");}catch(e){return null;} }
-function guardarParticipante(p){ localStorage.participanteLeilao=JSON.stringify(p); }
+function chaveParticipante(){return "participanteLeilao_"+(sessao?.login||"anonimo").toLowerCase();}
+function participante(){ try{return JSON.parse(localStorage.getItem(chaveParticipante())||"null");}catch(e){return null;} }
+function guardarParticipante(p){ localStorage.setItem(chaveParticipante(),JSON.stringify(p)); }
 function fmtKz(n){ return (Number(n)||0).toLocaleString("pt-PT")+" Kz"; }
 function fmtRestante(ms){
   if(ms<=0)return "Tempo esgotado";
@@ -1414,7 +1490,7 @@ function formParticipanteHTML(){
   return `<h3>Registo de participante</h3>
     <p style="font-size:13.5px;color:var(--cinza);margin-bottom:8px">Para participar no leilão, registe os seus dados. Ficam guardados neste dispositivo e são usados nos seus lances.</p>
     <div class="formGrelha">
-      <div><label>Nome completo *</label><input id="pNome" value="${esc(p.nome||sessao.nome||"")}"></div>
+      <div><label>Nome completo *</label><input id="pNome" value="${esc(sessao.nome||"")}" disabled></div>
       <div><label>Área *</label><select id="pArea">${AREAS.map(a=>`<option${p.area===a?" selected":""}>${a}</option>`).join("")}</select></div>
       <div><label>Função *</label><input id="pFuncao" value="${esc(p.funcao||"")}" placeholder="ex.: Técnico de QSSA"></div>
     </div>
@@ -1435,7 +1511,7 @@ function renderParticipantePainel(){
 }
 function editarParticipante(){ document.getElementById("painelParticipante").innerHTML=formParticipanteHTML(); }
 function salvarParticipante(){
-  const nome=(document.getElementById("pNome").value||"").trim();
+  const nome=sessao.nome;
   const area=document.getElementById("pArea").value;
   const funcao=(document.getElementById("pFuncao").value||"").trim();
   if(!nome||!funcao){flash("Indique o nome completo e a função.");return;}
@@ -1525,7 +1601,7 @@ async function fazerLance(u){
   document.getElementById("modalConteudo").innerHTML=
    `<h3>Fazer lance — ${esc(m.codigo)||esc(m.nome)}</h3>
     <p style="font-size:14px;color:var(--cinza)">${esc(m.nome)} · ${esc(m.estado)} · Preço de avaliação: ${m.valor!=null&&m.valor!==""?esc(fmtKz(m.valor)):"—"}${abateMax?` · Lance atual mais alto: <b>${esc(fmtKz(abateMax.valor))}</b>`:""}</p>
-    ${p?"":`<div class="wizard"><h4>Registo de participante (obrigatório)</h4><div class="formGrelha"><div><label>Nome completo *</label><input id="pNome" value="${esc(sessao.nome||"")}"></div><div><label>Área *</label><select id="pArea">${AREAS.map(a=>`<option>${a}</option>`).join("")}</select></div><div><label>Função *</label><input id="pFuncao" placeholder="ex.: Técnico de QSSA"></div></div></div>`}
+    ${p?"":`<div class="wizard"><h4>Registo de participante (obrigatório)</h4><div class="formGrelha"><div><label>Nome completo *</label><input id="pNome" value="${esc(sessao.nome||"")}" disabled></div><div><label>Área *</label><select id="pArea">${AREAS.map(a=>`<option>${a}</option>`).join("")}</select></div><div><label>Função *</label><input id="pFuncao" placeholder="ex.: Técnico de QSSA"></div></div></div>`}
     <label>Tipo de pedido *</label>
     <select id="lTipo" onchange="alternarTipoLance()">
       <option value="abate">Abate (compra — apresento um valor)</option>
@@ -1547,7 +1623,7 @@ function alternarTipoLance(){
 async function confirmarLance(u){
   let p=participante();
   if(!p){
-    const nome=((document.getElementById("pNome")||{}).value||"").trim();
+    const nome=sessao.nome;
     const area=(document.getElementById("pArea")||{}).value||AREAS[0];
     const funcao=((document.getElementById("pFuncao")||{}).value||"").trim();
     if(!nome||!funcao){flash("Registe o seu nome completo e função para participar.");return;}
@@ -1690,7 +1766,7 @@ async function abrirProposta(u){
   if(!dec||dec.estado!=="aprovado"){flash("Ainda não há decisão aprovada para este material.");return;}
   mostrarPropostaParticipante(dec.vencedorNome,dec.vencedorArea,dec.vencedorFuncao);
 }
-function textoProposta(p,itens){
+function textoProposta(p,itens,supervisor){
   const h=new Date().getHours();
   const saud = h<12?"Bom dia,":(h<19?"Boa tarde,":"Boa noite,");
   const abate=itens.filter(i=>i.tipo==="abate"), atrib=itens.filter(i=>i.tipo==="atribuicao");
@@ -1701,7 +1777,7 @@ function textoProposta(p,itens){
   }).join("\n");
   const total=abate.reduce((sm,i)=>sm+(Number(i.valor)||0),0);
   const dataExt=new Date().toLocaleDateString("pt-PT",{day:"2-digit",month:"long",year:"numeric"});
-  let t=`${saud} Distinto Supervisor ${SUPERVISOR_NOME},\n\n`;
+  let t=`${saud} Distinto Supervisor ${supervisor||"responsável"},\n\n`;
   t+=`No âmbito do processo de alienação de materiais avariados ou obsoletos do armazém do Terminal Oceânico do Namibe, venho apresentar, para a sua apreciação, a minha proposta de ${tipoTxt} dos materiais indicados abaixo.\n\n`;
   t+=`Participante: ${p.nome}\nÁrea: ${p.area}\nFunção: ${p.funcao}\n\n`;
   t+=`Materiais solicitados:\n${linhas}\n`;
@@ -1719,10 +1795,12 @@ async function mostrarPropostaParticipante(nome,area,funcao){
     itens.push({codigo:d.codigo||(m&&m.codigo)||"—",nome:d.nomeMaterial||(m&&m.nome)||"",
       qtd:m?m.qtd:"",unidade:m?m.unidade:"",tipo:d.tipoDecisao,valor:d.valorFinal,foto:m?m.foto:null,uuid:d.materialUuid});
   }
-  const texto=textoProposta({nome,area,funcao},itens);
+  const supervisores=[...new Set(decs.map(d=>d.decididoPor).filter(Boolean))];
+  const supervisor=supervisores.join(" / ")||"responsável";
+  const texto=textoProposta({nome,area,funcao},itens,supervisor);
   const imgs=itens.filter(i=>i.foto);
   document.getElementById("modalConteudo").innerHTML=
-   `<h3>Proposta para o Distinto Supervisor ${esc(SUPERVISOR_NOME)}</h3>
+   `<h3>Proposta para o Distinto Supervisor ${esc(supervisor)}</h3>
     <p style="font-size:13.5px;color:var(--cinza)">Participante: ${esc(nome)} · ${esc(area)} · ${esc(funcao)} — ${itens.length} material(is) aprovado(s).</p>
     <textarea id="txtProposta" class="propostaTxt">${esc(texto)}</textarea>
     <div class="acoesForm" style="margin-top:8px">
@@ -1820,7 +1898,7 @@ async function renderMovstock(){
     if(de&&d<de)return false; if(ate&&d>ate)return false;
     return true;
   });
-  const sup=pode.aprovar();
+  const sup=["admin","responsavel"].includes(sessao.perfil);
   const alvo=document.getElementById("listaMovstock");
   if(!lista.length){alvo.innerHTML='<div class="vazio">Sem movimentos de stock'+((q||ft2||fa2||de||ate)?" com os filtros atuais.":". Use <b>+ Registar movimento</b> ou os botões Entrada/Saída na lista de Materiais.")+'</div>';return;}
   const infoP=aplicarPaginacao("movstock",lista,[q,ft2,fa2,de,ate].join("|"));
@@ -1828,7 +1906,7 @@ async function renderMovstock(){
   alvo.innerHTML=barP+`<table><thead><tr><th>Data</th><th>Código</th><th>Material</th><th>Tipo</th><th style="text-align:right">Qtd</th><th style="text-align:right">Saldo</th><th>Documento</th><th>Utilizador</th>${sup?"<th></th>":""}</tr></thead><tbody>`+
     infoP.slice.map(x=>{
       const delta=(x.tipo==="Entrada"||x.tipo==="Devolução")?`<span class="movDelta pos">+${x.qtd}</span>`:x.tipo==="Saída"?`<span class="movDelta neg">−${x.qtd}</span>`:x.tipo==="Ajuste"?`→ ${x.qtdDepois}`:"—";
-      const podeEst=sup&&!x.estornoDe&&x.tipo!=="Transferência"&&!estornados.has(x.uuid);
+      const podeEst=pode.aprovar(x.area)&&!x.estornoDe&&x.tipo!=="Transferência"&&!estornados.has(x.uuid);
       return `<tr>
         <td style="white-space:nowrap">${dataHoraPT(x.data)}</td>
         <td><b>${esc(x.codigo)||"—"}</b></td>
@@ -1849,10 +1927,11 @@ async function selMaterialMov(){
   return u? await dbGet("materiais",u) : null;
 }
 async function abrirMovStock(presetUuid,presetTipo){
-  if(!pode.moverStock()){flash("O seu perfil não permite registar movimentos de stock.");return;}
   fotoMovTemp=null;
-  const mats=(await vivos()).sort((a,b)=>String(a.codigo||"~").localeCompare(String(b.codigo||"~")));
+  const mats=(await vivos()).filter(m=>pode.moverStock(m.area)).sort((a,b)=>String(a.codigo||"~").localeCompare(String(b.codigo||"~")));
+  if(!mats.length){flash("O seu perfil não permite registar movimentos de stock nas áreas disponíveis.");return;}
   const fixo = presetUuid? mats.find(m=>m.uuid===presetUuid) : null;
+  if(presetUuid&&!fixo){flash("Sem permissão para movimentar este material.");return;}
   document.getElementById("modalConteudo").innerHTML=`
     <h3>Registar movimento de stock</h3>
     ${fixo?`<input type="hidden" id="movMaterialFixo" value="${fixo.uuid}"><p style="font-size:14px;color:var(--cinza)"><b>${esc(fixo.codigo)||""}</b> — ${esc(fixo.nome)}</p>`
@@ -1863,7 +1942,7 @@ async function abrirMovStock(presetUuid,presetTipo){
     <div id="movCampoQtd"><label id="movQtdLabel">Quantidade *</label><input id="movQtd" type="number" min="0" step="0.01" placeholder="ex.: 10"></div>
     <div id="movCampoTransf" style="display:none">
       <label>Nova localização</label><input id="movDestLocal" placeholder="ex.: Corredor B, Prateleira 3">
-      <label>Nova área</label><select id="movDestArea">${AREAS.map(a=>`<option>${a}</option>`).join("")}</select>
+      <label>Nova área</label><select id="movDestArea">${AREAS.filter(a=>pode.moverStock(a)).map(a=>`<option>${a}</option>`).join("")}</select>
       <label>Novo responsável</label><input id="movDestResp">
     </div>
     <label>Documento / referência</label><input id="movDoc" placeholder="ex.: Guia GT-2026-123, Requisição nº…">
@@ -1929,10 +2008,10 @@ async function confirmarMovStock(){
 }
 
 async function estornarMov(uuid){
-  if(!pode.aprovar()){flash("Sem permissão para estornar movimentos.");return;}
   const todos=(await dbAll("movstock")).filter(x=>!x.apagado);
   const orig=todos.find(x=>x.uuid===uuid);
   if(!orig)return;
+  if(!pode.aprovar(orig.area)){flash("Sem permissão para estornar este movimento.");return;}
   if(orig.tipo==="Transferência"){flash("Para reverter uma transferência, registe uma nova transferência para a origem.");return;}
   if(orig.estornoDe){flash("Um estorno não pode ser estornado.");return;}
   if(todos.some(x=>x.estornoDe===uuid)){flash("Este movimento já foi estornado.");return;}
@@ -1961,10 +2040,10 @@ async function fichaKardex(u){
   const movs=(await dbAll("movstock")).filter(x=>!x.apagado&&x.materialUuid===u).sort((a,b)=>String(a.data||"").localeCompare(String(b.data||"")));
   const estornados=new Set(movs.filter(x=>x.estornoDe).map(x=>x.estornoDe));
   const abertura = movs.length?(Number(movs[0].qtdAntes)||0):(Number(m.qtd)||0);
-  const sup=pode.aprovar();
+  const sup=["admin","responsavel"].includes(sessao.perfil);
   const linhas = movs.length? movs.map(x=>{
     const delta=(x.tipo==="Entrada"||x.tipo==="Devolução")?`<span class="movDelta pos">+${x.qtd}</span>`:x.tipo==="Saída"?`<span class="movDelta neg">−${x.qtd}</span>`:x.tipo==="Ajuste"?`→ ${x.qtdDepois}`:"—";
-    const podeEst=sup&&!x.estornoDe&&x.tipo!=="Transferência"&&!estornados.has(x.uuid);
+    const podeEst=pode.aprovar(x.area)&&!x.estornoDe&&x.tipo!=="Transferência"&&!estornados.has(x.uuid);
     return `<tr>
       <td style="white-space:nowrap">${dataHoraPT(x.data)}</td>
       <td><span class="chipMov ${chipMov(x.tipo)}">${esc(x.tipo)}</span>${x.estornoDe?' <span class="etiqueta et-cinza">estorno</span>':""}${estornados.has(x.uuid)?' <span class="etiqueta et-cinza">estornado</span>':""}</td>
@@ -1981,7 +2060,7 @@ async function fichaKardex(u){
     <div class="kardexTopo"><span>${esc(m.nome)} · ${esc(m.area)}</span><span class="kardexSaldo">Saldo: ${m.qtd} ${esc(m.unidade||"")}</span><span style="color:var(--cinza);font-size:13px">Abertura: ${abertura} ${esc(m.unidade||"")}</span></div>
     <div class="tabelaScroll"><table><thead><tr><th>Data</th><th>Tipo</th><th style="text-align:right">Qtd</th><th style="text-align:right">Saldo</th><th>Documento</th><th>Motivo</th><th>Utilizador</th>${sup?"<th></th>":""}</tr></thead><tbody>${linhas}</tbody></table></div>
     <div class="acoesForm">
-      ${pode.moverStock()?`<button class="btn-verde" onclick="movStockRapido('${u}','Entrada')">+ Entrada</button><button class="btn-vermelho" onclick="movStockRapido('${u}','Saída')">− Saída</button><button class="btn-sec" onclick="movStockRapido('${u}','Ajuste')">Ajuste</button>`:""}
+      ${pode.moverStock(m.area)?`<button class="btn-verde" onclick="movStockRapido('${u}','Entrada')">+ Entrada</button><button class="btn-vermelho" onclick="movStockRapido('${u}','Saída')">− Saída</button><button class="btn-sec" onclick="movStockRapido('${u}','Ajuste')">Ajuste</button>`:""}
       <button class="btn-sec" onclick="imprimirKardex('${u}')">Imprimir / PDF</button>
       <button class="btn-sec" onclick="fecharModal()">Fechar</button>
     </div>`;
@@ -2048,6 +2127,7 @@ function refrescarChavePag(chave){
   else if(chave==="relatorio")renderRelatorio();
   else if(chave==="leilao")renderLeilao();
   else if(chave==="logins")renderUsers();
+  else if(chave==="auditoria")renderUsers();
 }
 function scrollTopVista(){ try{window.scrollTo({top:0,behavior:"smooth"});}catch(e){window.scrollTo(0,0);} }
 window.addEventListener("scroll",()=>{ const b=document.getElementById("btnTopo"); if(b)b.style.display=window.scrollY>500?"flex":"none"; });

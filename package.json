@@ -1,6 +1,6 @@
 {
   "name": "inventario-ton-web",
-  "version": "2.6.0",
+  "version": "2.7.0",
   "description": "Gestão e inventário de materiais do armazém — Terminal Oceânico do Namibe (Sonangol D&C) — versão web (Render + Turso)",
   "main": "server.js",
   "scripts": {
