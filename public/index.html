@@ -704,7 +704,7 @@ async function renderMateriais(){
   alvo.innerHTML=barP+`<table><thead><tr><th>Código</th><th>Material</th><th>Área</th><th>Qtd</th><th>Estado</th><th>Localização</th><th style="text-align:right">Preço aval. (Kz)</th><th></th></tr></thead><tbody>`+
     infoP.slice.map(m=>`<tr>
       <td><b>${esc(m.codigo)||'<span class="etiqueta et-amarelo">a sincronizar</span>'}</b></td>
-      <td>${m.foto?`<a onclick="abrirImagem('${m.uuid}')" style="color:var(--azul-medio);text-decoration:underline;cursor:pointer" title="Ver imagem do item">🖼️ ${esc(m.nome)}</a>`:esc(m.nome)}${m.marca?`<br><span style="font-size:12px;color:var(--cinza)">${esc(m.marca)}</span>`:""}</td>
+      <td>${(()=>{const rotulo=`${esc(m.nome)}${m.marca?`<br><span style="font-size:12px;color:var(--cinza)">${esc(m.marca)}</span>`:""}`;return m.foto?`<div style="display:flex;align-items:center;gap:9px"><img src="${esc(m.foto)}" loading="lazy" onclick="abrirImagem('${m.uuid}')" onerror="this.style.display='none'" title="Ver imagem do item" style="width:46px;height:46px;object-fit:cover;border-radius:6px;border:1px solid #C7D0D9;cursor:zoom-in;flex:0 0 auto"><span>${rotulo}</span></div>`:rotulo;})()}</td>
       <td>${esc(m.area)}</td><td>${m.qtd} ${esc(m.unidade||"")}</td>
       <td><span class="etiqueta ${COR_ESTADO[m.estado]||"et-cinza"}">${esc(m.estado)}</span></td>
       <td>${esc(m.local)||"—"}</td>
