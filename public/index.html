@@ -330,6 +330,7 @@ tr:hover td{background:#F7FAFC}
         <option value="responsavel">Responsável de área</option>
         <option value="qssa">QSSA</option>
         <option value="supervisor">Supervisor (leilão)</option>
+        <option value="participante">Participante do leilão</option>
         <option value="consulta">Consulta (somente leitura)</option>
       </select></div>
       <div><label>Áreas atribuídas</label><select id="uAreas" multiple size="5"></select>
@@ -404,7 +405,7 @@ tr:hover td{background:#F7FAFC}
 const AREAS=["Manutenção","Laboratório","QSSA","Movimentação de Produtos","SISE","Informática","Administração","Outra"];
 const ESTADOS=["Novo","Bom","Usado","Sem uso / avaliar reaproveitamento","Avariado","Obsoleto","Para descarte"];
 const COR_ESTADO={"Novo":"et-verde","Bom":"et-verde","Usado":"et-azul","Sem uso / avaliar reaproveitamento":"et-amarelo","Avariado":"et-laranja","Obsoleto":"et-laranja","Para descarte":"et-vermelho"};
-const PERFIS={admin:"Administrador",tecnico:"Técnico de inventário",responsavel:"Responsável de área",qssa:"QSSA",supervisor:"Supervisor (leilão)",consulta:"Consulta (somente leitura)"};
+const PERFIS={admin:"Administrador",tecnico:"Técnico de inventário",responsavel:"Responsável de área",qssa:"QSSA",supervisor:"Supervisor (leilão)",participante:"Participante do leilão",consulta:"Consulta (somente leitura)"};
 const ESTADOS_LEILAO=["Avariado","Obsoleto","Para descarte","Sem uso / avaliar reaproveitamento"];
 const DURACAO_LEILAO_H=42;
 let db=null, sessao=null, materialEdicao=null, fotoAtual=null;
@@ -438,7 +439,7 @@ const dbDel=(l,k)=>op(l,"readwrite",s=>s.delete(k));
 /* Guardar localmente + pôr na fila + tentar sincronizar */
 async function guardarEEnviar(tabela,registo){
   await dbPut(tabela,registo);
-  await dbPut("fila",{tabela,registo:JSON.parse(JSON.stringify(registo))});
+  await dbPut("fila",{tabela,registo:JSON.parse(JSON.stringify(registo)),autorLogin:sessao?.login||""});
   sincronizar();
 }
 
@@ -456,6 +457,7 @@ async function api(caminho,corpo,metodo){
 
 /* ================= SINCRONIZAÇÃO ================= */
 let aSincronizar=false;
+const chaveUltimoSync=()=>"ultimoSync_"+(sessao?.login||"anonimo").toLowerCase();
 function pintarEstadoSync(estado,texto){
   const el=document.getElementById("estadoSync");
   el.classList.toggle("offline",estado!=="online");
@@ -465,10 +467,11 @@ async function sincronizar(manual){
   if(!sessao||aSincronizar)return;
   aSincronizar=true;
   try{
-    const fila=await dbAll("fila");
+    const filaToda=await dbAll("fila");
+    const fila=filaToda.filter(f=>f.autorLogin?f.autorLogin===sessao.login:sessao.perfil!=="participante");
     const alteracoes={materiais:[],descartes:[],movimentos:[],notificacoes:[],lances:[],leiloes:[],movstock:[]};
     fila.forEach(f=>alteracoes[f.tabela]&&alteracoes[f.tabela].push(f.registo));
-    const r=await api("/api/sync",{desde:localStorage.ultimoSync||"",alteracoes});
+    const r=await api("/api/sync",{desde:localStorage.getItem(chaveUltimoSync())||"",alteracoes});
     if(r.usuario){
       const perfilMudou=sessao.perfil!==r.usuario.perfil||JSON.stringify(sessao.areas||[])!==JSON.stringify(r.usuario.areas||[]);
       sessao=r.usuario;
@@ -487,7 +490,7 @@ async function sincronizar(manual){
       }
     // materiais eliminados permanentemente (admin): remover da base local
     for(const e of r.dados.eliminados||[]){await dbDel("materiais",e.uuid);}
-    localStorage.ultimoSync=r.agora;
+    localStorage.setItem(chaveUltimoSync(),r.agora);
     pintarEstadoSync("online","Sincronizado");
     if((r.rejeitados||[]).length)flash(`${r.rejeitados.length} alteração(ões) rejeitada(s) por falta de permissão.`);
     else if(manual)flash("Sincronização concluída.");
@@ -539,7 +542,7 @@ function entrarNaApp(){
     flash("Altere a senha temporária para continuar.");
     mostrarVista("v-config");
   }else{
-    mostrarVista("v-dashboard"); sincronizar();
+    mostrarVista(sessao.perfil==="participante"?"v-leilao":"v-dashboard"); sincronizar();
   }
 }
 async function sair(){
@@ -555,7 +558,7 @@ const pode={
   eliminar:()=>sessao.perfil==="admin",
   gerirUsers:()=>sessao.perfil==="admin",
   importar:()=>["admin","tecnico"].includes(sessao.perfil),
-  licitar:()=>["admin","tecnico","responsavel"].includes(sessao.perfil),
+  licitar:()=>["admin","tecnico","responsavel","participante"].includes(sessao.perfil),
   supervisionar:()=>sessao.perfil==="supervisor",
   moverStock:area=>["admin","tecnico","responsavel"].includes(sessao.perfil)&&(sessao.perfil!=="responsavel"||(area===undefined?(sessao.areas||[]).length>0:pode.area(area)))
 };
@@ -564,7 +567,9 @@ const pode={
 function montarMenu(){
   const itens=sessao.trocarSenha
     ? [["v-config","Alterar senha"]]
-    : [["v-dashboard","Painel geral"],["v-materiais","Materiais"],["v-movstock","Movimentos de stock"],["v-descarte","Descarte"],["v-leilao","Leilão de materiais"],["v-relatorios","Relatórios"],["v-config","Configurações"]];
+    : sessao.perfil==="participante"
+      ? [["v-leilao","Leilão de materiais"],["v-config","Configurações"]]
+      : [["v-dashboard","Painel geral"],["v-materiais","Materiais"],["v-movstock","Movimentos de stock"],["v-descarte","Descarte"],["v-leilao","Leilão de materiais"],["v-relatorios","Relatórios"],["v-config","Configurações"]];
   if(!sessao.trocarSenha&&pode.gerirUsers())itens.push(["v-users","Utilizadores"]);
   document.getElementById("menu").innerHTML=itens.map(([id,nm])=>{
     let badge="";
@@ -584,6 +589,7 @@ function refrescarVista(id){
 }
 function mostrarVista(id){
   if(sessao.trocarSenha&&id!=="v-config")id="v-config";
+  if(sessao.perfil==="participante"&&!['v-leilao','v-config'].includes(id))id="v-leilao";
   if(id==="v-users"&&!pode.gerirUsers())id="v-dashboard";
   if(id==="v-cadastro"&&!pode.editar())id="v-materiais";
   document.querySelectorAll(".vista").forEach(v=>v.classList.remove("ativa"));
@@ -1645,7 +1651,6 @@ async function confirmarLance(u){
     licitanteNome:p.nome,licitanteArea:p.area,licitanteFuncao:p.funcao,licitanteLogin:sessao.login,
     data:agora(),atualizadoEm:agora(),apagado:0};
   await guardarEEnviar("lances",lance);
-  await registarMovimento(m,"Leilão — lance",(tipo==="abate"?"Lance de abate "+fmtKz(valor):"Pedido de atribuição")+" por "+p.nome);
   if(!jaHavia) await criarNotificacao(`Novo leilão iniciado: ${m.codigo||m.nome} — primeiro pedido por ${p.nome}.`,"v-leilao",["supervisor"]);
   fecharModal(); flash("Lance submetido. O cronómetro de "+DURACAO_LEILAO_H+"h conta a partir do primeiro lance."); renderLeilao();
 }

@@ -129,7 +129,7 @@ Todos os dados estão num único ficheiro no servidor: **`inventario_ton.db`** (
 
 ## 8. Leilão de materiais avariados/obsoletos
 
-O módulo **Leilão de materiais** permite aos perfis Administrador, Técnico e Responsável solicitar ao Supervisor o **abate** (compra, com valor) ou a **atribuição** (oferta sem custo) dos materiais avariados ou obsoletos do armazém.
+O módulo **Leilão de materiais** permite aos perfis Administrador, Técnico, Responsável e **Participante do leilão** solicitar ao Supervisor o **abate** (compra, com valor) ou a **atribuição** (oferta sem custo) dos materiais avariados ou obsoletos do armazém.
 
 **Materiais elegíveis:** aparecem automaticamente os materiais nos estados *Avariado*, *Obsoleto*, *Para descarte* e *Sem uso / avaliar reaproveitamento*.
 
@@ -140,6 +140,8 @@ O módulo **Leilão de materiais** permite aos perfis Administrador, Técnico e 
 4. Terminado o tempo, fica destacado o **lance mais alto** (vencedor provável), a aguardar a decisão do Supervisor.
 
 > **Consulta/Convidado:** é um perfil estritamente de leitura, inclusive no leilão. Cada participante que faça lances deve usar a sua própria conta, garantindo autoria e rastreabilidade.
+
+> **Participante do leilão:** tem acesso apenas ao módulo de leilão e à alteração da própria senha. Pode consultar materiais elegíveis, registar os seus dados e apresentar lances. Não pode alterar materiais, stock, descartes, importações, utilizadores ou decisões. A identidade dos restantes participantes é ocultada pelo servidor.
 
 **Supervisor:** qualquer conta ativa com perfil **Supervisor (leilão)** vê todos os lances e pode **aprovar** ou **recusar** o pedido. A identidade do Supervisor que decidiu é registada automaticamente pelo servidor.
 
@@ -184,6 +186,7 @@ Em cada lista há uma barra de paginação, no topo e no fundo, com a contagem (
 | Responsável | Responsável operacional | Edita, movimenta, estorna e emite parecer apenas nas áreas atribuídas; participa no leilão |
 | QSSA | Avaliação de segurança | Consulta o inventário e edita exclusivamente o parecer QSSA nos descartes |
 | Supervisor | Decisão do leilão | Consulta o inventário e aprova/recusa propostas; não altera stock ou materiais |
+| Participante | Participação individual no leilão | Consulta materiais elegíveis, regista-se e apresenta lances; sem acesso operacional ao inventário |
 | Consulta | Auditoria/consulta | Somente leitura e exportação; não faz lances nem altera dados |
 
 As permissões são verificadas no servidor, inclusive durante sincronizações offline. Alterações não autorizadas são rejeitadas e identificadas ao utilizador. Sessões duram até 12 horas; alterações de perfil, áreas, estado da conta ou redefinição de senha encerram as sessões afetadas. Responsáveis existentes sem área definida recebem temporariamente **Todas — atribuir área** para não interromper a operação; o Administrador deve substituir essa marcação pelas áreas reais em **Utilizadores**.

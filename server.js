@@ -18,8 +18,9 @@ const { get, all, run, exec } = require("./db");
 const PORTA = process.env.PORT || process.env.PORTA || 3000;
 const agora = () => new Date().toISOString();
 const uuid = () => crypto.randomUUID();
-const PERFIS_VALIDOS = new Set(["admin", "tecnico", "responsavel", "qssa", "supervisor", "consulta"]);
+const PERFIS_VALIDOS = new Set(["admin", "tecnico", "responsavel", "qssa", "supervisor", "participante", "consulta"]);
 const AREAS_VALIDAS = new Set(["Manutenção", "Laboratório", "QSSA", "Movimentação de Produtos", "SISE", "Informática", "Administração", "Outra"]);
+const ESTADOS_LEILAO = new Set(["Avariado", "Obsoleto", "Para descarte", "Sem uso / avaliar reaproveitamento"]);
 
 const areasDoUtilizador = u => {
   try { return JSON.parse(u.areas || "[]"); } catch (e) { return []; }
@@ -318,6 +319,13 @@ async function autorizarRegisto(usuario, tabela, reg) {
   }
   if (tabela === "notificacoes") {
     if (existente && apenasCampos(existente, reg, ["lidaPor", "atualizadoEm"])) return { ok: true, existente };
+    if (usuario.perfil === "participante") {
+      let destinos = [];
+      try { destinos = JSON.parse(reg.paraPerfis || "[]"); } catch (e) {}
+      const valida = reg.ligacao === "v-leilao" && destinos.length === 1 && destinos[0] === "supervisor"
+        && String(reg.texto || "").length <= 300;
+      return valida ? { ok: true, existente } : { ok: false, motivo: "Notificação de participante inválida." };
+    }
     const perfisFluxo = reg.ligacao === "v-leilao"
       ? ["admin", "tecnico", "responsavel", "supervisor"]
       : ["admin", "tecnico", "responsavel", "qssa"];
@@ -326,11 +334,26 @@ async function autorizarRegisto(usuario, tabela, reg) {
       : { ok: false, motivo: "Sem permissão para criar esta notificação." };
   }
   if (tabela === "lances") {
-    if (!["admin", "tecnico", "responsavel"].includes(usuario.perfil)) return { ok: false, motivo: "O perfil não pode licitar." };
+    if (!["admin", "tecnico", "responsavel", "participante"].includes(usuario.perfil)) return { ok: false, motivo: "O perfil não pode licitar." };
+    const material = await get("SELECT * FROM materiais WHERE uuid=? AND apagado=0", reg.materialUuid || "");
+    if (!material || !ESTADOS_LEILAO.has(material.estado)) return { ok: false, motivo: "O material não está elegível para leilão." };
+    const decisao = await get("SELECT estado FROM leiloes WHERE materialUuid=? AND apagado=0", reg.materialUuid);
+    if (decisao && ["aprovado", "recusado"].includes(decisao.estado)) return { ok: false, motivo: "O leilão já foi decidido." };
+    if (!["abate", "atribuicao"].includes(reg.tipoPedido)) return { ok: false, motivo: "Tipo de lance inválido." };
+    if (reg.tipoPedido === "abate" && (!Number.isFinite(Number(reg.valor)) || Number(reg.valor) <= 0))
+      return { ok: false, motivo: "O valor do lance deve ser positivo." };
+    if (reg.tipoPedido === "atribuicao" && !String(reg.justificacao || "").trim())
+      return { ok: false, motivo: "A atribuição requer justificação." };
     if (existente && existente.licitanteLogin !== usuario.login) return { ok: false, motivo: "O lance pertence a outro utilizador." };
+    if (existente && camposAlterados(existente, reg, ["servidorEm"]).length)
+      return { ok: false, motivo: "Um lance submetido não pode ser alterado." };
+    if (!AREAS_VALIDAS.has(reg.licitanteArea) || !String(reg.licitanteFuncao || "").trim()
+        || String(reg.licitanteFuncao).length > 120)
+      return { ok: false, motivo: "Área ou função do participante inválida." };
     reg.licitanteLogin = usuario.login;
     reg.licitanteNome = usuario.nome;
-    return { ok: true, existente };
+    if (!existente) { reg.data = agora(); reg.atualizadoEm = reg.data; reg.apagado = 0; }
+    return { ok: true, existente, material };
   }
   if (tabela === "leiloes") {
     if (usuario.perfil !== "supervisor") return { ok: false, motivo: "Apenas o Supervisor pode decidir leilões." };
@@ -350,7 +373,16 @@ app.post("/api/sync", autenticar, async (req, res) => {
         const a = await autorizarRegisto(req.usuario, t, reg);
         if (!a.ok) { rejeitados.push({ tabela: t, uuid: reg.uuid || "", motivo: a.motivo }); continue; }
         await aplicarRegisto(t, reg, codigosAtribuidos);
-        await auditar(req, a.existente ? "alterar" : "criar", t, reg.uuid, reg.area || "", "Sincronização");
+        if (t === "lances" && !a.existente && a.material) {
+          const detalhe = reg.tipoPedido === "abate"
+            ? `Lance de abate ${Number(reg.valor).toLocaleString("pt-PT")} Kz por ${req.usuario.nome}`
+            : `Pedido de atribuição por ${req.usuario.nome}`;
+          await run(`INSERT INTO movimentos(uuid,materialUuid,codigo,nomeMaterial,tipo,detalhe,usuario,data,servidorEm)
+            VALUES(?,?,?,?,?,?,?,?,?)`, uuid(), a.material.uuid, a.material.codigo, a.material.nome,
+            "Leilão — lance", detalhe, req.usuario.nome, agora(), agora());
+        }
+        await auditar(req, a.existente ? "alterar" : "criar", t, reg.uuid,
+          reg.area || (a.material && a.material.area) || "", "Sincronização");
       }
     for (const mv of alteracoes.movimentos || []) {
       const tipo = String(mv.tipo || "");
@@ -438,6 +470,28 @@ app.post("/api/sync", autenticar, async (req, res) => {
     const dados = {};
     for (const t of ["materiais", "descartes", "movimentos", "notificacoes", "eliminados", "lances", "leiloes", "movstock"])
       dados[t] = await all(`SELECT * FROM ${t} WHERE servidorEm > ? AND servidorEm <= ?`, desde, carimbo);
+    if (req.usuario.perfil === "participante") {
+      dados.materiais = dados.materiais.map(m => ESTADOS_LEILAO.has(m.estado) && !m.apagado
+        ? m : { uuid: m.uuid, atualizadoEm: m.atualizadoEm, servidorEm: m.servidorEm, apagado: 1 });
+      dados.descartes = [];
+      dados.movimentos = [];
+      dados.eliminados = [];
+      dados.movstock = [];
+      dados.notificacoes = dados.notificacoes.filter(n => {
+        try { return n.ligacao === "v-leilao" && JSON.parse(n.paraPerfis || "[]").includes("participante"); }
+        catch (e) { return false; }
+      });
+      dados.lances = dados.lances.map(l => l.licitanteLogin === req.usuario.login ? l : {
+        ...l, licitanteNome: "Outro participante", licitanteArea: "", licitanteFuncao: "", licitanteLogin: ""
+      });
+      dados.leiloes = await Promise.all(dados.leiloes.map(async d => {
+        if (!d.lanceVencedorUuid) return d;
+        const vencedor = await get("SELECT licitanteLogin FROM lances WHERE uuid=?", d.lanceVencedorUuid);
+        return vencedor && vencedor.licitanteLogin === req.usuario.login ? d : {
+          ...d, vencedorNome: "Outro participante", vencedorArea: "", vencedorFuncao: ""
+        };
+      }));
+    }
     res.json({ agora: carimbo, usuario: publicoUser(req.usuario), codigosAtribuidos, rejeitados, dados });
   } catch (e) {
     res.status(500).json({ erro: "Falha na sincronização: " + e.message });
@@ -495,7 +549,7 @@ app.post("/api/seed", autenticar, exigirPerfil("admin"), async (req, res) => {
   res.json({ ok: true, criados: cods.length });
 });
 
-app.get("/api/estado", (req, res) => res.json({ app: "Inventário TON", versao: "2.7-web", agora: agora() }));
+app.get("/api/estado", (req, res) => res.json({ app: "Inventário TON", versao: "2.7.1-web", agora: agora() }));
 
 /* ---------------- Arranque ---------------- */
 function ipsLAN() {
