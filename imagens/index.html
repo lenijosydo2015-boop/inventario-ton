@@ -1,0 +1,2192 @@
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="theme-color" content="#0E2A47">
+<title>Inventário TON — Armazém</title>
+<link rel="manifest" href="manifest.json">
+<link rel="icon" href="img/icone-192.png">
+<link rel="apple-touch-icon" href="img/icone-192.png">
+<style>
+:root{
+  --azul:#0E2A47; --azul-medio:#1D4E7E; --azul-claro:#E8EEF5;
+  --cinza:#5C6670; --cinza-claro:#EDF0F3; --fundo:#F4F6F8; --branco:#FFFFFF;
+  --verde:#1E8E5A; --verde-claro:#E2F3EB;
+  --laranja:#D97A1E; --laranja-claro:#FBEEDD;
+  --vermelho:#C0392B; --vermelho-claro:#F9E5E2;
+  --amarelo:#C99A1F; --amarelo-claro:#FAF2DA;
+  --raio:10px; --sombra:0 1px 3px rgba(14,42,71,.12);
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;background:var(--fundo);color:#1C2733;font-size:15px}
+h1,h2,h3{color:var(--azul);font-weight:600}
+button{font:inherit;cursor:pointer;border:none;border-radius:8px}
+input,select,textarea{font:inherit;width:100%;padding:9px 11px;border:1px solid #C7D0D9;border-radius:8px;background:var(--branco)}
+input:focus,select:focus,textarea:focus{outline:2px solid var(--azul-medio);outline-offset:1px}
+label{display:block;font-size:13px;font-weight:600;color:var(--cinza);margin:10px 0 4px}
+.btn{background:var(--azul);color:#fff;padding:10px 18px;font-weight:600}
+.btn:hover{background:var(--azul-medio)}
+.btn-sec{background:var(--cinza-claro);color:var(--azul);padding:10px 18px;font-weight:600}
+.btn-verde{background:var(--verde);color:#fff;padding:10px 18px;font-weight:600}
+.btn-vermelho{background:var(--vermelho);color:#fff;padding:10px 18px;font-weight:600}
+.btn-mini{padding:5px 10px;font-size:13px}
+#telaLogin{position:fixed;inset:0;background:linear-gradient(160deg,var(--azul) 0%,var(--azul-medio) 100%);display:flex;align-items:center;justify-content:center;padding:20px;z-index:100}
+.cartaoLogin{background:var(--branco);border-radius:14px;padding:34px 30px;width:100%;max-width:380px;box-shadow:0 10px 40px rgba(0,0,0,.3)}
+.marca{display:flex;align-items:center;gap:12px;margin-bottom:6px}
+.marca .selo{width:46px;height:46px;border-radius:10px;background:var(--azul);color:#fff;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:15px}
+.marca h1{font-size:21px}
+.sub{color:var(--cinza);font-size:13px;margin-bottom:18px}
+.aviso{margin-top:14px;font-size:12.5px;color:var(--cinza);background:var(--cinza-claro);padding:9px 11px;border-radius:8px}
+#app{display:none}
+header.topo{position:sticky;top:0;background:var(--azul);color:#fff;display:flex;align-items:center;gap:10px;padding:10px 14px;z-index:50}
+header.topo .selo{width:34px;height:34px;border-radius:8px;background:rgba(255,255,255,.15);display:flex;align-items:center;justify-content:center;font-weight:700;font-size:12px;flex-shrink:0}
+header.topo h1{color:#fff;font-size:17px;flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+#menuBtn{background:none;color:#fff;font-size:22px;padding:4px 8px;display:none}
+#btnScan{background:rgba(255,255,255,.15);color:#fff;padding:7px 12px;font-weight:600;font-size:13.5px;white-space:nowrap}
+#estadoSync{font-size:11.5px;text-align:right;opacity:.9;line-height:1.35;min-width:86px}
+#estadoSync .ponto{display:inline-block;width:8px;height:8px;border-radius:50%;margin-right:4px;background:#7ED9A6}
+#estadoSync.offline .ponto{background:#E8A04C}
+.corpo{display:flex;min-height:calc(100vh - 54px)}
+nav#menu{width:218px;background:var(--branco);border-right:1px solid #DDE3E9;padding:14px 10px;flex-shrink:0}
+nav#menu button{display:flex;justify-content:space-between;align-items:center;width:100%;text-align:left;background:none;padding:10px 12px;border-radius:8px;color:var(--cinza);font-weight:600;font-size:14px;margin-bottom:2px}
+nav#menu button:hover{background:var(--azul-claro);color:var(--azul)}
+nav#menu button.ativo{background:var(--azul);color:#fff}
+.crachá{background:var(--vermelho);color:#fff;font-size:11px;font-weight:700;border-radius:99px;padding:1px 7px}
+main{flex:1;padding:20px;max-width:1150px;width:100%}
+.vista{display:none}
+.vista.ativa{display:block}
+.cabecVista{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;margin-bottom:16px}
+.cabecVista h2{font-size:20px}
+.grelha{display:grid;grid-template-columns:repeat(auto-fill,minmax(168px,1fr));gap:12px;margin-bottom:20px}
+.cartao{background:var(--branco);border-radius:var(--raio);padding:14px 16px;box-shadow:var(--sombra);border-left:5px solid var(--azul)}
+.cartao .num{font-size:26px;font-weight:700;color:var(--azul)}
+.cartao .rot{font-size:12.5px;color:var(--cinza);font-weight:600}
+.cartao.verde{border-left-color:var(--verde)} .cartao.verde .num{color:var(--verde)}
+.cartao.laranja{border-left-color:var(--laranja)} .cartao.laranja .num{color:var(--laranja)}
+.cartao.vermelho{border-left-color:var(--vermelho)} .cartao.vermelho .num{color:var(--vermelho)}
+.cartao.amarelo{border-left-color:var(--amarelo)} .cartao.amarelo .num{color:var(--amarelo)}
+.painel{background:var(--branco);border-radius:var(--raio);padding:16px;box-shadow:var(--sombra);margin-bottom:16px}
+.painel h3{font-size:15px;margin-bottom:10px}
+table{width:100%;border-collapse:collapse;background:var(--branco);border-radius:var(--raio);overflow:hidden;box-shadow:var(--sombra)}
+th{background:var(--azul-claro);color:var(--azul);text-align:left;padding:9px 10px;font-size:12.5px;text-transform:uppercase;letter-spacing:.3px}
+td{padding:9px 10px;border-top:1px solid #ECF0F3;font-size:14px;vertical-align:middle}
+tr:hover td{background:#F7FAFC}
+.tabelaScroll{overflow-x:auto;border-radius:var(--raio)}
+.etiqueta{display:inline-block;padding:3px 9px;border-radius:99px;font-size:12px;font-weight:700;white-space:nowrap}
+.et-verde{background:var(--verde-claro);color:var(--verde)} .et-azul{background:var(--azul-claro);color:var(--azul-medio)}
+.et-amarelo{background:var(--amarelo-claro);color:var(--amarelo)} .et-laranja{background:var(--laranja-claro);color:var(--laranja)}
+.et-vermelho{background:var(--vermelho-claro);color:var(--vermelho)} .et-cinza{background:var(--cinza-claro);color:var(--cinza)}
+.barraArea{display:flex;align-items:center;gap:10px;margin-bottom:7px;font-size:13.5px}
+.barraArea .nomeA{width:140px;color:var(--cinza);font-weight:600;flex-shrink:0}
+.barraArea .trilho{flex:1;background:var(--cinza-claro);border-radius:99px;height:14px;overflow:hidden}
+.barraArea .preench{height:100%;background:var(--azul-medio);border-radius:99px;min-width:2px}
+.barraArea .qtd{width:36px;text-align:right;font-weight:700;color:var(--azul)}
+.formGrelha{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:0 16px}
+.formGrelha .larga{grid-column:1/-1}
+.acoesForm{display:flex;gap:10px;margin-top:18px;flex-wrap:wrap}
+.fotoPrev{max-width:160px;max-height:160px;border-radius:8px;border:1px solid #C7D0D9;display:block;margin-top:6px}
+.miniFotos{display:flex;gap:6px;flex-wrap:wrap;margin-top:6px}
+.miniFotos img{width:64px;height:64px;object-fit:cover;border-radius:6px;border:1px solid #C7D0D9}
+.filtros{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px}
+.filtros input,.filtros select{width:auto;min-width:140px;flex:1}
+.vazio{padding:30px;text-align:center;color:var(--cinza);background:var(--branco);border-radius:var(--raio);box-shadow:var(--sombra)}
+.msgFlash{position:fixed;bottom:18px;left:50%;transform:translateX(-50%);background:var(--azul);color:#fff;padding:11px 20px;border-radius:99px;box-shadow:0 4px 16px rgba(0,0,0,.25);z-index:200;font-weight:600;display:none;max-width:92vw;text-align:center}
+.wizard{background:var(--azul-claro);border:1px solid #C9D8E8;border-radius:var(--raio);padding:14px 16px;margin:14px 0}
+.wizard h4{color:var(--azul);font-size:14px;margin-bottom:8px}
+.perguntaW{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:7px 0;border-bottom:1px dashed #C9D8E8;font-size:14px}
+.perguntaW:last-of-type{border-bottom:none}
+.perguntaW select{width:90px;flex-shrink:0;padding:5px 8px}
+.resultadoW{margin-top:10px;padding:10px 12px;border-radius:8px;background:var(--branco);font-weight:600;display:none}
+.fundoModal{position:fixed;inset:0;background:rgba(14,42,71,.55);display:none;align-items:flex-start;justify-content:center;padding:24px 14px;z-index:90;overflow-y:auto}
+.fundoModal.aberto{display:flex}
+.modal{background:var(--branco);border-radius:14px;padding:22px;width:100%;max-width:660px;box-shadow:0 12px 50px rgba(0,0,0,.35)}
+.modal h3{margin-bottom:8px}
+.detLinha{display:flex;gap:8px;padding:6px 0;border-bottom:1px solid #F0F3F6;font-size:14px}
+.detLinha b{width:170px;flex-shrink:0;color:var(--cinza)}
+#videoScan{width:100%;max-height:340px;border-radius:10px;background:#000}
+@media(max-width:760px){
+  #menuBtn{display:block}
+  nav#menu{position:fixed;left:-235px;top:54px;bottom:0;z-index:60;transition:left .2s;box-shadow:4px 0 14px rgba(0,0,0,.15)}
+  nav#menu.aberto{left:0}
+  main{padding:14px}
+  header.topo h1{font-size:15px}
+  .detLinha b{width:118px}
+}
+@media print{header.topo,nav#menu,.filtros,.cabecVista button,.acoesForm{display:none!important}}
+
+/* ===== Paginação ===== */
+.paginacao{display:flex;flex-wrap:wrap;align-items:center;gap:10px;justify-content:space-between;padding:8px 2px;font-size:13px;color:var(--cinza)}
+.paginacao .pagCtrl{display:flex;flex-wrap:wrap;gap:4px;align-items:center}
+.btnPag{background:var(--branco);border:1px solid #C7D0D9;color:var(--azul);padding:5px 10px;border-radius:7px;font-weight:600;font-size:13px;min-width:34px}
+.btnPag:hover:not(:disabled){background:var(--azul-claro)} .btnPag.ativo{background:var(--azul);color:#fff;border-color:var(--azul)}
+.btnPag:disabled{opacity:.45;cursor:default}
+.paginacao .pagReticencias{padding:0 2px} .paginacao select{width:auto;padding:5px 8px} .paginacao .pagInfo{font-weight:600;color:var(--azul-medio)}
+#btnTopo{position:fixed;right:16px;bottom:16px;z-index:80;width:44px;height:44px;border-radius:50%;background:var(--azul);color:#fff;font-size:20px;box-shadow:0 4px 14px rgba(0,0,0,.3);display:none;align-items:center;justify-content:center}
+#btnTopo:hover{background:var(--azul-medio)}
+@media print{.paginacao,#btnTopo{display:none!important}}
+
+/* ===== Movimentos de stock ===== */
+.chipMov{display:inline-block;padding:2px 8px;border-radius:99px;font-size:11.5px;font-weight:700;white-space:nowrap}
+.mv-entrada{background:var(--verde-claro);color:var(--verde)} .mv-saida{background:var(--vermelho-claro);color:var(--vermelho)}
+.mv-devolucao{background:var(--azul-claro);color:var(--azul-medio)} .mv-ajuste{background:var(--amarelo-claro);color:var(--amarelo)}
+.mv-transferencia{background:var(--cinza-claro);color:var(--cinza)}
+.movDelta.pos{color:var(--verde);font-weight:700} .movDelta.neg{color:var(--vermelho);font-weight:700}
+.kardexTopo{display:flex;flex-wrap:wrap;gap:16px;align-items:baseline;margin:6px 0 12px}
+.kardexSaldo{font-size:24px;font-weight:700;color:var(--azul)}
+
+/* ===== Leilão de materiais ===== */
+.leilaoBarra{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:12px}
+.gridLeilao{display:grid;grid-template-columns:repeat(auto-fill,minmax(275px,1fr));gap:14px;margin-bottom:16px}
+.cardLeilao{background:var(--branco);border-radius:var(--raio);box-shadow:var(--sombra);border-top:4px solid var(--azul-medio);overflow:hidden;display:flex;flex-direction:column}
+.cardLeilao .imgL{width:100%;height:150px;object-fit:cover;background:var(--cinza-claro);cursor:zoom-in;display:block}
+.cardLeilao .semImgL{width:100%;height:150px;display:flex;align-items:center;justify-content:center;color:var(--cinza);background:var(--cinza-claro);font-size:13px}
+.cardLeilao .corpoL{padding:12px 14px;display:flex;flex-direction:column;gap:6px;flex:1}
+.cardLeilao .nmL{font-weight:600;color:var(--azul);font-size:14.5px;line-height:1.25}
+.cardLeilao .metaL{font-size:12.5px;color:var(--cinza)}
+.cronoBox{background:var(--azul-claro);border-radius:8px;padding:8px 10px;text-align:center;margin-top:2px}
+.cronoBox .rotC{font-size:11px;color:var(--cinza);text-transform:uppercase;letter-spacing:.3px}
+.cronometro{font-size:19px;font-weight:700;color:var(--azul);font-variant-numeric:tabular-nums}
+.cronometro.crono-fim{font-size:13.5px}
+.cronoBox.urgente{background:var(--vermelho-claro)} .cronoBox.urgente .cronometro{color:var(--vermelho)}
+.lanceTopo{display:flex;justify-content:space-between;align-items:baseline;gap:8px;font-size:13.5px}
+.lanceTopo b{color:var(--verde);font-size:15px}
+.acoesL{display:flex;gap:6px;flex-wrap:wrap;margin-top:auto;padding-top:8px}
+.tabLances th,.tabLances td{font-size:13px}
+.tabLances tr.venc td{background:var(--verde-claro)!important}
+.chipTipo{display:inline-block;padding:2px 8px;border-radius:99px;font-size:11.5px;font-weight:700}
+.chip-abate{background:var(--azul-claro);color:var(--azul-medio)} .chip-atrib{background:var(--verde-claro);color:var(--verde)}
+.propostaTxt{width:100%;min-height:250px;font-family:"Segoe UI",Arial,sans-serif;font-size:13.5px;white-space:pre-wrap;line-height:1.5}
+.miniImgProp{width:76px;height:76px;object-fit:cover;border-radius:6px;border:1px solid #C7D0D9;cursor:pointer;display:block}
+</style>
+</head>
+<body>
+
+<div id="telaLogin">
+  <div class="cartaoLogin">
+    <div class="marca"><div class="selo">TON</div><h1>Inventário TON</h1></div>
+    <div class="sub">Armazém — Terminal Oceânico do Namibe · v2.0 (rede)</div>
+    <label>Utilizador</label><input id="loginUser" autocomplete="username">
+    <label>Senha</label><input id="loginPass" type="password" autocomplete="current-password">
+    <div style="margin-top:16px"><button class="btn" style="width:100%" onclick="entrar()">Entrar</button></div>
+    <div class="aviso" id="avisoLogin">Use as credenciais individuais fornecidas pelo Administrador.</div>
+  </div>
+</div>
+
+<div id="app">
+<header class="topo">
+  <button id="menuBtn" onclick="document.getElementById('menu').classList.toggle('aberto')">☰</button>
+  <div class="selo">TON</div><h1>Inventário TON</h1>
+  <button id="btnScan" onclick="abrirScanner()">📷 Ler QR</button>
+  <div id="estadoSync"><span class="ponto"></span><span id="txtSync">Online</span><br><a href="#" onclick="sair();return false" style="color:#fff;opacity:.85">Sair</a></div>
+</header>
+<div class="corpo">
+<nav id="menu"></nav>
+<main>
+
+<section class="vista" id="v-dashboard">
+  <div class="cabecVista"><h2>Painel geral</h2><button class="btn-sec btn-mini" onclick="sincronizar(true)">Sincronizar agora</button></div>
+  <div class="grelha" id="dashCartoes"></div>
+  <div class="painel"><h3>Materiais por área</h3><div id="dashAreas"></div></div>
+  <div class="painel"><h3>Últimos materiais cadastrados</h3><div class="tabelaScroll" id="dashUltimos"></div></div>
+</section>
+
+<section class="vista" id="v-materiais">
+  <div class="cabecVista"><h2>Materiais</h2>
+    <div style="display:flex;gap:8px;flex-wrap:wrap">
+      <button class="btn-sec" onclick="imprimirEtiquetas()">🏷️ Etiquetas QR</button>
+      <button class="btn" id="btnNovoMat" onclick="abrirCadastro()">+ Novo material</button>
+    </div>
+  </div>
+  <div class="filtros">
+    <input id="fPesquisa" placeholder="Pesquisar nome, código, descrição…" oninput="renderMateriais()">
+    <select id="fArea" onchange="renderMateriais()"></select>
+    <select id="fEstado" onchange="renderMateriais()"></select>
+    <select id="fLocal" onchange="renderMateriais()"></select>
+  </div>
+  <div class="tabelaScroll" id="listaMateriais"></div>
+</section>
+
+<section class="vista" id="v-cadastro">
+  <div class="cabecVista"><h2 id="tituloCadastro">Novo material</h2></div>
+  <div class="painel">
+    <div class="formGrelha">
+      <div><label>Código interno</label><input id="mCodigo" disabled placeholder="atribuído pelo servidor"></div>
+      <div><label>Código QR / barras (se existir)</label><input id="mCodBarra"></div>
+      <div class="larga"><label>Nome do material *</label><input id="mNome"></div>
+      <div class="larga"><label>Descrição detalhada</label><textarea id="mDescricao" rows="2"></textarea></div>
+      <div><label>Área proprietária *</label><select id="mArea"></select></div>
+      <div><label>Categoria</label><input id="mCategoria" placeholder="ex.: Ferramenta, EPI, Reagente…"></div>
+      <div><label>Quantidade *</label><input id="mQtd" type="number" min="0" value="1"><span id="mQtdHint" style="display:none;font-size:12px;color:var(--cinza);margin-top:4px">Quantidade gerida por Movimentos de stock (Entrada/Saída/Ajuste).</span></div>
+      <div><label>Unidade</label><select id="mUnidade"><option>un</option><option>cx</option><option>kg</option><option>L</option><option>m</option><option>par</option><option>rolo</option><option>conjunto</option></select></div>
+      <div><label>Estado *</label><select id="mEstado"></select></div>
+      <div><label>Localização no armazém</label><input id="mLocal" placeholder="ex.: Corredor B, Prateleira 3"></div>
+      <div><label>Data de entrada</label><input id="mDataEntrada" type="date"></div>
+      <div><label>Origem</label><input id="mOrigem"></div>
+      <div><label>Responsável pela área</label><input id="mResponsavel"></div>
+      <div><label>Preço de avaliação (Kz)</label><input id="mValor" type="number" min="0" step="0.01"></div>
+      <div><label>Número de série</label><input id="mSerie"></div>
+      <div><label>Marca / modelo</label><input id="mMarca"></div>
+      <div class="larga"><label>Fotografia</label>
+        <input id="mFoto" type="file" accept="image/*" capture="environment" onchange="carregarFoto(this)">
+        <img id="mFotoPrev" class="fotoPrev" style="display:none">
+      </div>
+      <div class="larga"><label>Observações</label><textarea id="mObs" rows="2"></textarea></div>
+    </div>
+    <div class="wizard">
+      <h4>Assistente de classificação automática (opcional)</h4>
+      <div class="perguntaW"><span>O material está funcional?</span><select id="w1"><option value="">—</option><option value="s">Sim</option><option value="n">Não</option></select></div>
+      <div class="perguntaW"><span>Está em uso?</span><select id="w2"><option value="">—</option><option value="s">Sim</option><option value="n">Não</option></select></div>
+      <div class="perguntaW"><span>Está danificado sem reparação viável?</span><select id="w3"><option value="">—</option><option value="s">Sim</option><option value="n">Não</option></select></div>
+      <div class="perguntaW"><span>Existe substituto mais recente?</span><select id="w4"><option value="">—</option><option value="s">Sim</option><option value="n">Não</option></select></div>
+      <div class="perguntaW"><span>Está sem utilidade há mais de 12 meses?</span><select id="w5"><option value="">—</option><option value="s">Sim</option><option value="n">Não</option></select></div>
+      <div class="perguntaW"><span>Representa risco de segurança, ambiente ou organização?</span><select id="w6"><option value="">—</option><option value="s">Sim</option><option value="n">Não</option></select></div>
+      <div class="perguntaW"><span>Pode ser reaproveitado por outra área?</span><select id="w7"><option value="">—</option><option value="s">Sim</option><option value="n">Não</option></select></div>
+      <div style="margin-top:10px"><button class="btn-sec btn-mini" onclick="classificar()">Sugerir classificação</button></div>
+      <div class="resultadoW" id="resultadoW"></div>
+    </div>
+    <div class="acoesForm">
+      <button class="btn" onclick="guardarMaterial()">Guardar material</button>
+      <button class="btn-sec" onclick="mostrarVista('v-materiais')">Cancelar</button>
+    </div>
+  </div>
+</section>
+
+<section class="vista" id="v-descarte">
+  <div class="cabecVista"><h2>Pedidos de descarte</h2></div>
+  <div class="tabelaScroll" id="listaDescartes"></div>
+</section>
+
+<section class="vista" id="v-relatorios">
+  <div class="cabecVista"><h2>Relatórios</h2></div>
+  <div class="painel">
+    <label>Escolha o relatório</label>
+    <select id="tipoRel" onchange="renderRelatorio()">
+      <option value="geral">Inventário geral do armazém</option>
+      <option value="area">Inventário por área</option>
+      <option value="obsoletos">Materiais obsoletos</option>
+      <option value="descarte">Materiais para descarte</option>
+      <option value="semdata">Materiais sem data de entrada</option>
+      <option value="semresp">Materiais sem responsável identificado</option>
+      <option value="estado">Materiais por estado de conservação</option>
+      <option value="local">Materiais por localização</option>
+      <option value="historico">Histórico de entradas e atualizações</option>
+    </select>
+    <div id="relFiltroExtra" style="margin-top:8px"></div>
+    <div class="acoesForm">
+      <button class="btn-verde" onclick="exportarExcel()">Exportar Excel (.xlsx)</button>
+      <button class="btn-vermelho" onclick="exportarPDF()">Exportar PDF</button>
+      <button class="btn-sec" onclick="window.print()">Imprimir</button>
+    </div>
+  </div>
+  <div class="tabelaScroll" id="tabelaRel"></div>
+</section>
+
+<section class="vista" id="v-config">
+  <div class="cabecVista"><h2>Configurações</h2></div>
+  <div class="painel" id="configImport"><h3>Importação em massa via Excel</h3>
+    <p style="font-size:14px;color:var(--cinza);margin-bottom:10px">Descarregue o modelo, preencha uma linha por material e importe — ideal para o carregamento inicial do inventário do armazém.</p>
+    <div class="acoesForm" style="margin-top:0">
+      <button class="btn-sec" onclick="descarregarModelo()">Descarregar modelo (.xlsx)</button>
+      <button class="btn" onclick="document.getElementById('ficheiroImport').click()">Importar Excel preenchido</button>
+      <input id="ficheiroImport" type="file" accept=".xlsx" style="display:none" onchange="importarExcel(this)">
+    </div>
+    <div id="resImport" style="margin-top:10px;font-size:14px"></div>
+  </div>
+  <div class="painel" id="configImportAval"><h3>Importar lista de avaliação (Excel)</h3>
+    <p style="font-size:14px;color:var(--cinza);margin-bottom:10px">Importe a folha de avaliação de preços (ex.: <b>Avaliacao_Inventario_TON_2026.xlsx</b>). Cada linha torna-se um material com o <b>preço de avaliação</b> preenchido. As colunas são detetadas pelo cabeçalho (<i>Item/Nome, Categoria, Qtd, Preço, Observações</i>) — linhas de título e total são ignoradas.</p>
+    <p style="font-size:13px;color:var(--cinza);margin-bottom:8px">A <b>área</b> é atribuída automaticamente pela categoria (ex.: <i>Informatica → Informática</i>, <i>EPI/EPC/Placas → QSSA</i>, <i>Equipamento/Cabos → Manutenção</i>, <i>Material Escritório → Administração</i>). A imagem de cada item fica ligada ao seu nome (clicável na lista de Materiais).</p>
+    <div class="formGrelha">
+      <div><label>Área por omissão (categorias não reconhecidas)</label><select id="impAvalArea"></select></div>
+      <div><label>Estado a atribuir</label><select id="impAvalEstado"></select></div>
+    </div>
+    <div class="acoesForm" style="margin-top:8px">
+      <button class="btn" onclick="document.getElementById('ficheiroAval').click()">Importar lista de avaliação</button>
+      <input id="ficheiroAval" type="file" accept=".xlsx" style="display:none" onchange="importarAvaliacao(this)">
+    </div>
+    <div id="resAval" style="margin-top:10px;font-size:14px"></div>
+  </div>
+  <div class="painel" id="configSenha"><h3>Alterar a minha senha</h3>
+    <div class="formGrelha">
+      <div><label>Nova senha (mín. 10 caracteres)</label><input id="novaSenha" type="password" autocomplete="new-password"></div>
+      <div style="align-self:end"><button class="btn-sec" onclick="alterarSenha()">Alterar senha</button></div>
+    </div>
+  </div>
+  <div class="painel" id="configBackup"><h3>Cópia de segurança central</h3>
+    <p style="font-size:14px;color:var(--cinza)">Os dados estão centralizados na base de dados do servidor. O Administrador deve manter cópias de segurança regulares na plataforma de alojamento da base de dados.</p>
+  </div>
+</section>
+
+<section class="vista" id="v-users">
+  <div class="cabecVista"><h2>Utilizadores e auditoria</h2></div>
+  <div class="painel"><h3>Adicionar utilizador</h3>
+    <div class="formGrelha">
+      <div><label>Nome completo</label><input id="uNome"></div>
+      <div><label>Utilizador (login)</label><input id="uLogin"></div>
+      <div><label>Senha</label><input id="uSenha" type="password"></div>
+      <div><label>Perfil</label><select id="uPerfil">
+        <option value="admin">Administrador</option>
+        <option value="tecnico">Técnico de inventário</option>
+        <option value="responsavel">Responsável de área</option>
+        <option value="qssa">QSSA</option>
+        <option value="supervisor">Supervisor (leilão)</option>
+        <option value="participante">Participante do leilão</option>
+        <option value="consulta">Consulta (somente leitura)</option>
+      </select></div>
+      <div><label>Áreas atribuídas</label><select id="uAreas" multiple size="5"></select>
+    </div>
+    <div class="acoesForm"><button class="btn" onclick="criarUser()">Criar utilizador</button></div>
+  </div>
+  <div class="painel"><h3>Utilizadores</h3><div class="tabelaScroll" id="listaUsers"></div></div>
+  <div class="painel"><h3>Registo de acessos (últimos 300 — imutável)</h3><div class="tabelaScroll" id="listaLogins"></div></div>
+  <div class="painel"><h3>Auditoria de ações (últimas 300 — imutável)</h3><div class="tabelaScroll" id="listaAuditoria"></div></div>
+</section>
+
+<section class="vista" id="v-leilao">
+  <div class="cabecVista"><h2>Leilão de materiais</h2>
+    <button class="btn-sec btn-mini" onclick="sincronizar(true)">Sincronizar agora</button>
+  </div>
+  <div class="painel"><p style="font-size:14px;color:var(--cinza);margin:0">Leilão de materiais avariados ou obsoletos do armazém. Os perfis autorizados podem apresentar lances de <b>abate</b> (compra, com valor) ou pedidos de <b>atribuição</b> (oferta sem custo). O cronómetro de 42h começa no primeiro lance; o Supervisor que tomar a decisão fica identificado na proposta e no registo de auditoria.</p></div>
+  <div class="painel" id="painelParticipante"></div>
+  <div id="avisoSupervisor"></div>
+  <div class="leilaoBarra">
+    <input id="fLeilaoPesq" placeholder="Pesquisar material, código, marca…" oninput="renderLeilao()" style="flex:1;min-width:180px">
+    <select id="fLeilaoEstado" onchange="renderLeilao()" style="width:auto"><option value="">Todos os estados elegíveis</option></select>
+    <select id="fLeilaoFase" onchange="renderLeilao()" style="width:auto">
+      <option value="">Todas as fases</option>
+      <option value="aberto">A decorrer</option>
+      <option value="sem-lances">Sem lances</option>
+      <option value="encerrado">Tempo esgotado</option>
+      <option value="aprovado">Aprovados</option>
+      <option value="recusado">Recusados</option>
+    </select>
+  </div>
+  <div id="listaLeilao"></div>
+  <div class="painel" id="painelPropostas" style="display:none"></div>
+</section>
+
+<section class="vista" id="v-movstock">
+  <div class="cabecVista"><h2>Movimentos de stock</h2>
+    <div style="display:flex;gap:8px;flex-wrap:wrap">
+      <button class="btn-sec btn-mini" onclick="sincronizar(true)">Sincronizar agora</button>
+      <button class="btn" id="btnNovoMov" onclick="abrirMovStock()">+ Registar movimento</button>
+    </div>
+  </div>
+  <div class="painel"><p style="font-size:14px;color:var(--cinza);margin:0">Cada entrada, saída, devolução, ajuste de contagem ou transferência atualiza automaticamente o saldo do material. Consulte a ficha (kardex) de cada material para ver o histórico com o saldo corrente.</p></div>
+  <div class="filtros">
+    <input id="fMovPesq" placeholder="Pesquisar material, código, documento…" oninput="renderMovstock()">
+    <select id="fMovTipo" onchange="renderMovstock()"><option value="">Todos os tipos</option></select>
+    <select id="fMovArea" onchange="renderMovstock()"></select>
+    <input id="fMovDe" type="date" onchange="renderMovstock()" title="Data — de" style="min-width:140px">
+    <input id="fMovAte" type="date" onchange="renderMovstock()" title="Data — até" style="min-width:140px">
+  </div>
+  <div class="tabelaScroll" id="listaMovstock"></div>
+</section>
+
+</main>
+</div>
+</div>
+
+<div class="fundoModal" id="modalDet" onclick="if(event.target===this)fecharModal()">
+  <div class="modal" id="modalConteudo"></div>
+</div>
+<div class="msgFlash" id="flash"></div>
+<button id="btnTopo" onclick="scrollTopVista()" title="Voltar ao topo" aria-label="Voltar ao topo">↑</button>
+
+<script src="vendor/jsQR.js"></script>
+<script src="vendor/qrcode.js"></script>
+<script src="vendor/exceljs.min.js"></script>
+<script src="vendor/jspdf.umd.min.js"></script>
+<script src="vendor/jspdf.plugin.autotable.min.js"></script>
+
+<script>
+"use strict";
+/* ================= CONSTANTES ================= */
+const AREAS=["Manutenção","Laboratório","QSSA","Movimentação de Produtos","SISE","Informática","Administração","Outra"];
+const ESTADOS=["Novo","Bom","Usado","Sem uso / avaliar reaproveitamento","Avariado","Obsoleto","Para descarte"];
+const COR_ESTADO={"Novo":"et-verde","Bom":"et-verde","Usado":"et-azul","Sem uso / avaliar reaproveitamento":"et-amarelo","Avariado":"et-laranja","Obsoleto":"et-laranja","Para descarte":"et-vermelho"};
+const PERFIS={admin:"Administrador",tecnico:"Técnico de inventário",responsavel:"Responsável de área",qssa:"QSSA",supervisor:"Supervisor (leilão)",participante:"Participante do leilão",consulta:"Consulta (somente leitura)"};
+const ESTADOS_LEILAO=["Avariado","Obsoleto","Para descarte","Sem uso / avaliar reaproveitamento"];
+const DURACAO_LEILAO_H=42;
+let db=null, sessao=null, materialEdicao=null, fotoAtual=null;
+
+const novoUuid=()=> (crypto.randomUUID?crypto.randomUUID():
+  "xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx".replace(/[xy]/g,c=>{const r=Math.random()*16|0;return (c==="x"?r:(r&0x3|0x8)).toString(16);}));
+const agora=()=>new Date().toISOString();
+const dataPT=iso=>iso?new Date(iso).toLocaleDateString("pt-PT"):"—";
+const dataHoraPT=iso=>iso?new Date(iso).toLocaleString("pt-PT",{dateStyle:"short",timeStyle:"short"}):"—";
+const esc=t=>(t==null?"":String(t)).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+function flash(msg){const f=document.getElementById("flash");f.textContent=msg;f.style.display="block";clearTimeout(f._t);f._t=setTimeout(()=>f.style.display="none",3000);}
+
+/* ================= BASE LOCAL (cache + fila de envio) ================= */
+function abrirDB(){return new Promise((res,rej)=>{
+  const r=indexedDB.open("inventario_ton_v2",3);
+  r.onupgradeneeded=e=>{const d=e.target.result;
+    ["materiais","descartes","movimentos","notificacoes","lances","leiloes","movstock"].forEach(s=>{
+      if(!d.objectStoreNames.contains(s)) d.createObjectStore(s,{keyPath:"uuid"});});
+    if(!d.objectStoreNames.contains("fila")) d.createObjectStore("fila",{keyPath:"id",autoIncrement:true});
+  };
+  r.onsuccess=e=>{db=e.target.result;res();}; r.onerror=()=>rej(r.error);
+});}
+const op=(loja,modo,fn)=>new Promise((res,rej)=>{
+  const q=fn(db.transaction(loja,modo).objectStore(loja));
+  q.onsuccess=()=>res(q.result); q.onerror=()=>rej(q.error);});
+const dbPut=(l,o)=>op(l,"readwrite",s=>s.put(o));
+const dbAll=l=>op(l,"readonly",s=>s.getAll());
+const dbGet=(l,k)=>op(l,"readonly",s=>s.get(k));
+const dbDel=(l,k)=>op(l,"readwrite",s=>s.delete(k));
+
+/* Guardar localmente + pôr na fila + tentar sincronizar */
+async function guardarEEnviar(tabela,registo){
+  await dbPut(tabela,registo);
+  await dbPut("fila",{tabela,registo:JSON.parse(JSON.stringify(registo)),autorLogin:sessao?.login||""});
+  sincronizar();
+}
+
+/* ================= API ================= */
+async function api(caminho,corpo,metodo){
+  const r=await fetch(caminho,{
+    method:metodo||(corpo?"POST":"GET"),
+    headers:{"Content-Type":"application/json",...(localStorage.token?{Authorization:"Bearer "+localStorage.token}:{})},
+    body:corpo?JSON.stringify(corpo):undefined});
+  if(r.status===401){if(sessao){flash("Sessão expirada — entre novamente.");sair();}throw new Error("401");}
+  const j=await r.json().catch(()=>({}));
+  if(!r.ok)throw new Error(j.erro||"Erro do servidor");
+  return j;
+}
+
+/* ================= SINCRONIZAÇÃO ================= */
+let aSincronizar=false;
+const chaveUltimoSync=()=>"ultimoSync_"+(sessao?.login||"anonimo").toLowerCase();
+function pintarEstadoSync(estado,texto){
+  const el=document.getElementById("estadoSync");
+  el.classList.toggle("offline",estado!=="online");
+  document.getElementById("txtSync").textContent=texto;
+}
+async function sincronizar(manual){
+  if(!sessao||aSincronizar)return;
+  aSincronizar=true;
+  try{
+    const filaToda=await dbAll("fila");
+    const fila=filaToda.filter(f=>f.autorLogin?f.autorLogin===sessao.login:sessao.perfil!=="participante");
+    const alteracoes={materiais:[],descartes:[],movimentos:[],notificacoes:[],lances:[],leiloes:[],movstock:[]};
+    fila.forEach(f=>alteracoes[f.tabela]&&alteracoes[f.tabela].push(f.registo));
+    const r=await api("/api/sync",{desde:localStorage.getItem(chaveUltimoSync())||"",alteracoes});
+    if(r.usuario){
+      const perfilMudou=sessao.perfil!==r.usuario.perfil||JSON.stringify(sessao.areas||[])!==JSON.stringify(r.usuario.areas||[]);
+      sessao=r.usuario;
+      localStorage.usuario=JSON.stringify(sessao);
+      if(perfilMudou){montarMenu();aplicarVisibilidadeConfig();}
+    }
+    for(const f of fila)await dbDel("fila",f.id);
+    for(const c of r.codigosAtribuidos||[]){
+      const m=await dbGet("materiais",c.uuid);
+      if(m&&m.codigo!==c.codigo){m.codigo=c.codigo;await dbPut("materiais",m);}
+    }
+    for(const t of ["materiais","descartes","movimentos","notificacoes","lances","leiloes","movstock"])
+      for(const reg of r.dados[t]||[]){
+        const local=await dbGet(t,reg.uuid);
+        if(!local||(local.atualizadoEm||local.data||"")<=(reg.atualizadoEm||reg.data||""))await dbPut(t,reg);
+      }
+    // materiais eliminados permanentemente (admin): remover da base local
+    for(const e of r.dados.eliminados||[]){await dbDel("materiais",e.uuid);}
+    localStorage.setItem(chaveUltimoSync(),r.agora);
+    pintarEstadoSync("online","Sincronizado");
+    if((r.rejeitados||[]).length)flash(`${r.rejeitados.length} alteração(ões) rejeitada(s) por falta de permissão.`);
+    else if(manual)flash("Sincronização concluída.");
+    atualizarCrachaNotif();
+    const vistaAtiva=document.querySelector(".vista.ativa");
+    if(vistaAtiva)refrescarVista(vistaAtiva.id);
+  }catch(e){
+    const pend=(await dbAll("fila")).length;
+    pintarEstadoSync("offline",pend?`Offline · ${pend} pendente${pend>1?"s":""}`:"Offline");
+    if(manual)flash("Sem ligação ao servidor — as alterações ficam guardadas e seguem quando houver rede.");
+  }
+  aSincronizar=false;
+}
+window.addEventListener("online",()=>sincronizar());
+setInterval(()=>sincronizar(),60000);
+
+/* ================= SESSÃO ================= */
+async function iniciar(){
+  await abrirDB();
+  if("serviceWorker" in navigator)navigator.serviceWorker.register("sw.js").catch(()=>{});
+  document.getElementById("loginPass").addEventListener("keydown",e=>{if(e.key==="Enter")entrar();});
+  if(localStorage.token&&localStorage.usuario){
+    sessao=JSON.parse(localStorage.usuario);
+    entrarNaApp();
+  }
+}
+async function entrar(){
+  const login=document.getElementById("loginUser").value.trim();
+  const senha=document.getElementById("loginPass").value;
+  try{
+    const r=await api("/api/login",{login,senha});
+    localStorage.token=r.token; localStorage.usuario=JSON.stringify(r.usuario);
+    sessao=r.usuario; entrarNaApp();
+  }catch(e){
+    if(e.message==="Failed to fetch"){
+      if(localStorage.token&&localStorage.usuario){
+        sessao=JSON.parse(localStorage.usuario);
+        flash("Servidor indisponível — a entrar em modo offline com os dados locais.");
+        entrarNaApp();
+      } else flash("Sem ligação ao servidor e sem sessão guardada neste dispositivo.");
+    } else flash(e.message);
+  }
+}
+function entrarNaApp(){
+  document.getElementById("telaLogin").style.display="none";
+  document.getElementById("app").style.display="block";
+  montarMenu(); preencherSelects(); aplicarVisibilidadeConfig();
+  if(sessao.trocarSenha){
+    flash("Altere a senha temporária para continuar.");
+    mostrarVista("v-config");
+  }else{
+    mostrarVista(sessao.perfil==="participante"?"v-leilao":"v-dashboard"); sincronizar();
+  }
+}
+async function sair(){
+  try{await api("/api/logout",{},"POST");}catch(e){}
+  localStorage.removeItem("token");localStorage.removeItem("usuario");
+  location.reload();
+}
+const pode={
+  area:area=>sessao.perfil!=="responsavel"||(sessao.areas||[]).includes("*")||(sessao.areas||[]).includes(area),
+  editar:area=>["admin","tecnico","responsavel"].includes(sessao.perfil)&&(sessao.perfil!=="responsavel"||(area===undefined?(sessao.areas||[]).length>0:pode.area(area))),
+  aprovar:area=>["admin","responsavel"].includes(sessao.perfil)&&(area===undefined||pode.area(area)),
+  parecerQSSA:()=>["admin","qssa"].includes(sessao.perfil),
+  eliminar:()=>sessao.perfil==="admin",
+  gerirUsers:()=>sessao.perfil==="admin",
+  importar:()=>["admin","tecnico"].includes(sessao.perfil),
+  licitar:()=>["admin","tecnico","responsavel","participante"].includes(sessao.perfil),
+  supervisionar:()=>sessao.perfil==="supervisor",
+  moverStock:area=>["admin","tecnico","responsavel"].includes(sessao.perfil)&&(sessao.perfil!=="responsavel"||(area===undefined?(sessao.areas||[]).length>0:pode.area(area)))
+};
+
+/* ================= NAVEGAÇÃO ================= */
+function montarMenu(){
+  const itens=sessao.trocarSenha
+    ? [["v-config","Alterar senha"]]
+    : sessao.perfil==="participante"
+      ? [["v-leilao","Leilão de materiais"],["v-config","Configurações"]]
+      : [["v-dashboard","Painel geral"],["v-materiais","Materiais"],["v-movstock","Movimentos de stock"],["v-descarte","Descarte"],["v-leilao","Leilão de materiais"],["v-relatorios","Relatórios"],["v-config","Configurações"]];
+  if(!sessao.trocarSenha&&pode.gerirUsers())itens.push(["v-users","Utilizadores"]);
+  document.getElementById("menu").innerHTML=itens.map(([id,nm])=>{
+    let badge="";
+    if(id==="v-descarte")badge='<span class="crachá" id="crachaNotif" style="display:none"></span>';
+    if(id==="v-leilao")badge='<span class="crachá" id="crachaLeilao" style="display:none"></span>';
+    return `<button data-v="${id}" onclick="mostrarVista('${id}')"><span>${nm}</span>${badge}</button>`;
+  }).join("");
+}
+function refrescarVista(id){
+  if(id==="v-dashboard")renderDashboard();
+  if(id==="v-materiais")renderMateriais();
+  if(id==="v-movstock")renderMovstock();
+  if(id==="v-descarte")renderDescartes();
+  if(id==="v-leilao")renderLeilao();
+  if(id==="v-relatorios")renderRelatorio();
+  if(id==="v-users")renderUsers();
+}
+function mostrarVista(id){
+  if(sessao.trocarSenha&&id!=="v-config")id="v-config";
+  if(sessao.perfil==="participante"&&!['v-leilao','v-config'].includes(id))id="v-leilao";
+  if(id==="v-users"&&!pode.gerirUsers())id="v-dashboard";
+  if(id==="v-cadastro"&&!pode.editar())id="v-materiais";
+  document.querySelectorAll(".vista").forEach(v=>v.classList.remove("ativa"));
+  document.getElementById(id).classList.add("ativa");
+  document.querySelectorAll("#menu button").forEach(b=>b.classList.toggle("ativo",b.dataset.v===id));
+  document.getElementById("menu").classList.remove("aberto");
+  if(id==="v-descarte")marcarNotifLidas("v-descarte");
+  if(id==="v-leilao")marcarNotifLidas("v-leilao");
+  if(id==="v-leilao")iniciarCronometros(); else pararCronometros();
+  refrescarVista(id);
+}
+function preencherSelects(){
+  const areasEdicao=sessao.perfil==="responsavel"&&!(sessao.areas||[]).includes("*")?(sessao.areas||[]):AREAS;
+  document.getElementById("mArea").innerHTML=areasEdicao.map(a=>`<option>${a}</option>`).join("");
+  document.getElementById("mEstado").innerHTML=ESTADOS.map(e=>`<option>${e}</option>`).join("");
+  document.getElementById("fArea").innerHTML='<option value="">Todas as áreas</option>'+AREAS.map(a=>`<option>${a}</option>`).join("");
+  document.getElementById("fEstado").innerHTML='<option value="">Todos os estados</option>'+ESTADOS.map(e=>`<option>${e}</option>`).join("");
+  const ia=document.getElementById("impAvalArea"),ie=document.getElementById("impAvalEstado");
+  if(ia)ia.innerHTML=AREAS.map(a=>`<option${a==="Outra"?" selected":""}>${a}</option>`).join("");
+  if(ie)ie.innerHTML=ESTADOS.map(e=>`<option${e==="Usado"?" selected":""}>${e}</option>`).join("");
+  const ua=document.getElementById("uAreas");
+  if(ua)ua.innerHTML='<option value="*">Todas as áreas (transição)</option>'+AREAS.map(a=>`<option>${a}</option>`).join("");
+  const up=document.getElementById("uPerfil");
+  if(up){up.onchange=atualizarCamposPerfil;atualizarCamposPerfil();}
+}
+function aplicarVisibilidadeConfig(){
+  for(const id of ["configImport","configImportAval"]){const el=document.getElementById(id);if(el)el.style.display=pode.importar()&&!sessao.trocarSenha?"block":"none";}
+  const b=document.getElementById("configBackup");if(b)b.style.display=pode.gerirUsers()&&!sessao.trocarSenha?"block":"none";
+}
+function atualizarCamposPerfil(){
+  const perfil=document.getElementById("uPerfil")?.value,areas=document.getElementById("uAreas");
+  if(!areas)return;
+  areas.disabled=!["responsavel","qssa"].includes(perfil);
+  if(perfil==="qssa")for(const o of areas.options)o.selected=o.value==="QSSA";
+  if(!["responsavel","qssa"].includes(perfil))for(const o of areas.options)o.selected=false;
+}
+
+/* ================= NOTIFICAÇÕES ================= */
+async function criarNotificacao(texto,ligacao,paraPerfis){
+  await guardarEEnviar("notificacoes",{uuid:novoUuid(),paraPerfis:JSON.stringify(paraPerfis||["admin","responsavel","qssa"]),
+    texto,ligacao:ligacao||"v-descarte",lidaPor:"[]",data:agora(),atualizadoEm:agora()});
+}
+async function notifNaoLidas(ligacao){
+  const ns=await dbAll("notificacoes");
+  return ns.filter(n=>{
+    try{return JSON.parse(n.paraPerfis).includes(sessao.perfil)&&!JSON.parse(n.lidaPor).includes(sessao.login)&&(!ligacao||n.ligacao===ligacao);}catch(e){return false;}
+  });
+}
+async function atualizarCrachaNotif(){
+  const cd=document.getElementById("crachaNotif");
+  if(cd){const n=(await notifNaoLidas("v-descarte")).length; cd.style.display=n?"inline-block":"none"; cd.textContent=n;}
+  const cl=document.getElementById("crachaLeilao");
+  if(cl){const n=(await notifNaoLidas("v-leilao")).length; cl.style.display=n?"inline-block":"none"; cl.textContent=n;}
+}
+async function marcarNotifLidas(ligacao){
+  for(const n of await notifNaoLidas(ligacao)){
+    const lidaPor=JSON.parse(n.lidaPor||"[]"); lidaPor.push(sessao.login);
+    n.lidaPor=JSON.stringify(lidaPor); n.atualizadoEm=agora();
+    await guardarEEnviar("notificacoes",n);
+  }
+  atualizarCrachaNotif();
+}
+
+/* ================= MATERIAIS ================= */
+const vivos=async()=> (await dbAll("materiais")).filter(m=>!m.apagado);
+async function abrirCadastro(mat){
+  if(!pode.editar(mat?.area)){flash("O seu perfil não permite cadastrar ou editar materiais desta área.");return;}
+  materialEdicao=mat||null; fotoAtual=mat?mat.foto||null:null;
+  document.getElementById("tituloCadastro").textContent=mat?"Editar material "+(mat.codigo||""):"Novo material";
+  const v=(id,val)=>document.getElementById(id).value=val??"";
+  v("mCodigo",mat?(mat.codigo||"a atribuir na sincronização"):"atribuído pelo servidor ao guardar");
+  v("mCodBarra",mat?.codBarra);v("mNome",mat?.nome);v("mDescricao",mat?.descricao);
+  v("mArea",mat?.area||AREAS[0]);v("mCategoria",mat?.categoria);
+  v("mQtd",mat?mat.qtd:1);v("mUnidade",mat?.unidade||"un");
+  {const qEl=document.getElementById("mQtd"); qEl.disabled=!!mat; const hint=document.getElementById("mQtdHint"); if(hint)hint.style.display=mat?"block":"none";}
+  v("mEstado",mat?.estado||"Bom");v("mLocal",mat?.local);
+  v("mDataEntrada",mat?.dataEntrada);v("mOrigem",mat?.origem);
+  v("mResponsavel",mat?.responsavel);v("mValor",mat?.valor);
+  v("mSerie",mat?.serie);v("mMarca",mat?.marca);v("mObs",mat?.obs);
+  document.getElementById("mFoto").value="";
+  const p=document.getElementById("mFotoPrev");
+  if(fotoAtual){p.src=fotoAtual;p.style.display="block";}else p.style.display="none";
+  ["w1","w2","w3","w4","w5","w6","w7"].forEach(w=>document.getElementById(w).value="");
+  document.getElementById("resultadoW").style.display="none";
+  mostrarVista("v-cadastro");
+}
+function redimensionarImagem(ficheiro,max){return new Promise(res=>{
+  const img=new Image(),rd=new FileReader();
+  rd.onload=()=>{img.onload=()=>{
+    const f=Math.min(1,max/Math.max(img.width,img.height));
+    const c=document.createElement("canvas");
+    c.width=img.width*f;c.height=img.height*f;
+    c.getContext("2d").drawImage(img,0,0,c.width,c.height);
+    res(c.toDataURL("image/jpeg",.72));
+  };img.src=rd.result;};
+  rd.readAsDataURL(ficheiro);
+});}
+async function carregarFoto(input){
+  if(!input.files[0])return;
+  fotoAtual=await redimensionarImagem(input.files[0],800);
+  const p=document.getElementById("mFotoPrev");p.src=fotoAtual;p.style.display="block";
+}
+function classificar(){
+  const w=i=>document.getElementById("w"+i).value;
+  let sugestao=null,nota="";
+  if(w(3)==="s")sugestao="Obsoleto";
+  if(w(3)==="s"&&w(7)==="n")sugestao="Para descarte";
+  if(!sugestao&&w(1)==="s"&&w(2)==="s")sugestao="Bom";
+  if(!sugestao&&w(1)==="s"&&w(5)==="s")sugestao="Sem uso / avaliar reaproveitamento";
+  if(!sugestao&&w(1)==="n")sugestao="Avariado";
+  if(w(6)==="s")nota=" Atenção: representa risco — priorizar avaliação QSSA.";
+  if(w(4)==="s"&&!nota)nota=" Existe substituto mais recente — considerar avaliação para descarte.";
+  const r=document.getElementById("resultadoW");r.style.display="block";
+  if(sugestao){
+    document.getElementById("mEstado").value=sugestao;
+    r.textContent="Classificação sugerida: "+sugestao+"."+nota+" (já aplicada no campo Estado — pode alterar)";
+  }else r.textContent="Responda pelo menos às perguntas 1 a 3 para obter uma sugestão."+nota;
+}
+async function registarMovimento(m,tipo,detalhe){
+  await guardarEEnviar("movimentos",{uuid:novoUuid(),materialUuid:m.uuid,codigo:m.codigo||"(pendente)",
+    nomeMaterial:m.nome,tipo,detalhe,usuario:sessao.nome,data:agora()});
+}
+async function guardarMaterial(){
+  const g=id=>document.getElementById(id).value.trim();
+  if(!pode.editar(g("mArea"))){flash("Sem permissão para guardar materiais desta área.");return;}
+  if(!g("mNome")){flash("Indique o nome do material.");return;}
+  const novo=!materialEdicao;
+  const m={...(materialEdicao||{uuid:novoUuid(),codigo:null,criadoPor:sessao.nome,criadoEm:agora(),apagado:0}),
+    codBarra:g("mCodBarra"),nome:g("mNome"),descricao:g("mDescricao"),
+    area:g("mArea"),categoria:g("mCategoria"),qtd:Number(g("mQtd"))||0,unidade:g("mUnidade"),
+    estado:g("mEstado"),local:g("mLocal"),dataEntrada:g("mDataEntrada"),origem:g("mOrigem"),
+    responsavel:g("mResponsavel"),valor:g("mValor")?Number(g("mValor")):null,
+    serie:g("mSerie"),marca:g("mMarca"),foto:fotoAtual,obs:g("mObs"),atualizadoEm:agora()};
+  await guardarEEnviar("materiais",m);
+  await registarMovimento(m,novo?"Entrada / cadastro":"Atualização",novo?"Material cadastrado no armazém":"Dados do material atualizados");
+  flash(novo?"Material guardado — código atribuído na sincronização.":"Material atualizado.");
+  mostrarVista("v-materiais");
+}
+async function renderMateriais(){
+  const mats=await vivos();
+  const btnNovo=document.getElementById("btnNovoMat");if(btnNovo)btnNovo.style.display=pode.editar()?"inline-block":"none";
+  const locs=[...new Set(mats.map(m=>m.local).filter(Boolean))].sort();
+  const fl=document.getElementById("fLocal"),valAtual=fl.value;
+  fl.innerHTML='<option value="">Todas as localizações</option>'+locs.map(l=>`<option${l===valAtual?" selected":""}>${esc(l)}</option>`).join("");
+  const q=document.getElementById("fPesquisa").value.toLowerCase();
+  const fa=document.getElementById("fArea").value,fe=document.getElementById("fEstado").value,flo=fl.value;
+  const lista=mats.filter(m=>
+    (!q||[m.nome,m.codigo,m.descricao,m.categoria,m.marca,m.serie,m.codBarra].join(" ").toLowerCase().includes(q))
+    &&(!fa||m.area===fa)&&(!fe||m.estado===fe)&&(!flo||m.local===flo)
+  ).sort((a,b)=>(b.criadoEm||"").localeCompare(a.criadoEm||""));
+  filtradosAtuais=lista;
+  const alvo=document.getElementById("listaMateriais");
+  if(!lista.length){alvo.innerHTML='<div class="vazio">Nenhum material encontrado. Use <b>+ Novo material</b> ou a importação Excel em Configurações.</div>';return;}
+  const infoP=aplicarPaginacao("materiais",lista,[q,fa,fe,flo].join("|"));
+  const barP=barraPaginacao("materiais",infoP);
+  alvo.innerHTML=barP+`<table><thead><tr><th>Código</th><th>Material</th><th>Área</th><th>Qtd</th><th>Estado</th><th>Localização</th><th style="text-align:right">Preço aval. (Kz)</th><th></th></tr></thead><tbody>`+
+    infoP.slice.map(m=>`<tr>
+      <td><b>${esc(m.codigo)||'<span class="etiqueta et-amarelo">a sincronizar</span>'}</b></td>
+      <td>${(()=>{const rotulo=`${esc(m.nome)}${m.marca?`<br><span style="font-size:12px;color:var(--cinza)">${esc(m.marca)}</span>`:""}`;return m.foto?`<div style="display:flex;align-items:center;gap:9px"><img src="${esc(m.foto)}" loading="lazy" onclick="abrirImagem('${m.uuid}')" onerror="this.style.display='none'" title="Ver imagem do item" style="width:46px;height:46px;object-fit:cover;border-radius:6px;border:1px solid #C7D0D9;cursor:zoom-in;flex:0 0 auto"><span>${rotulo}</span></div>`:rotulo;})()}</td>
+      <td>${esc(m.area)}</td><td>${m.qtd} ${esc(m.unidade||"")}</td>
+      <td><span class="etiqueta ${COR_ESTADO[m.estado]||"et-cinza"}">${esc(m.estado)}</span></td>
+      <td>${esc(m.local)||"—"}</td>
+      <td style="text-align:right;white-space:nowrap">${m.valor!=null&&m.valor!==""?Number(m.valor).toLocaleString("pt-PT"):"—"}</td>
+      <td style="white-space:nowrap">
+        <button class="btn-sec btn-mini" onclick="verDetalhes('${m.uuid}')">Ver</button>
+        <button class="btn-sec btn-mini" onclick="fichaKardex('${m.uuid}')" title="Ficha / kardex do material">Ficha</button>
+        ${pode.moverStock(m.area)?`<button class="btn-verde btn-mini" onclick="movStockRapido('${m.uuid}','Entrada')">+ Entrada</button>
+        <button class="btn-vermelho btn-mini" onclick="movStockRapido('${m.uuid}','Saída')">− Saída</button>`:""}
+        ${pode.editar(m.area)?`<button class="btn-sec btn-mini" onclick="editarMat('${m.uuid}')">Editar</button>
+        <button class="btn-vermelho btn-mini" onclick="pedirDescarte('${m.uuid}')">Descarte</button>`:""}
+        ${m.codigo?`<button class="btn-sec btn-mini" onclick="etiquetaUm('${m.uuid}')">🏷️</button>`:""}
+        ${pode.eliminar()?`<button class="btn-vermelho btn-mini" onclick="eliminarMaterial('${m.uuid}')" title="Eliminar permanentemente (apenas administrador)">🗑️ Eliminar</button>`:""}
+      </td></tr>`).join("")+`</tbody></table>`+barP;
+}
+let filtradosAtuais=[];
+async function editarMat(u){abrirCadastro(await dbGet("materiais",u));}
+async function eliminarMaterial(u){
+  if(!pode.eliminar()){flash("Apenas o administrador pode eliminar registos de material.");return;}
+  const m=await dbGet("materiais",u);
+  if(!m){return;}
+  if(!confirm(`ELIMINAR PERMANENTEMENTE o registo:\n\n${m.codigo||"(sem código)"} — ${m.nome}\n\nO registo é removido definitivamente do inventário em todos os dispositivos (não é recuperável e não passa pelo pedido de descarte). O histórico de movimentações guarda o registo desta eliminação.\n\nConfirma?`))return;
+  try{
+    await api("/api/materiais/"+encodeURIComponent(u),null,"DELETE");
+    await dbDel("materiais",u);
+    fecharModal();flash("Registo eliminado permanentemente.");renderMateriais();
+    sincronizar();
+  }catch(e){
+    flash(e.message==="401"?"Sessão expirada.":"Não foi possível eliminar agora — a eliminação permanente exige ligação ao servidor. Tente quando estiver online.");
+  }
+}
+async function verDetalhes(u){
+  const m=await dbGet("materiais",u);
+  const movs=(await dbAll("movimentos")).filter(x=>x.materialUuid===u).sort((a,b)=>b.data.localeCompare(a.data));
+  const L=(r,v)=>`<div class="detLinha"><b>${r}</b><span>${v||"—"}</span></div>`;
+  document.getElementById("modalConteudo").innerHTML=
+    `<h3>${esc(m.codigo)||"(código a atribuir)"} — ${esc(m.nome)}</h3>
+    ${m.foto?`<img src="${m.foto}" class="fotoPrev" style="max-width:220px;max-height:220px;cursor:zoom-in" onclick="abrirImagem('${m.uuid}')" onerror="this.style.display='none'" title="Clique para ampliar">`:""}
+    ${L("Descrição",esc(m.descricao))}${L("Área",esc(m.area))}${L("Categoria",esc(m.categoria))}
+    ${L("Saldo atual",m.qtd+" "+esc(m.unidade||""))}
+    ${L("Estado",`<span class="etiqueta ${COR_ESTADO[m.estado]||"et-cinza"}">${esc(m.estado)}</span>`)}
+    ${L("Localização",esc(m.local))}${L("Data de entrada",dataPT(m.dataEntrada))}${L("Origem",esc(m.origem))}
+    ${L("Responsável",esc(m.responsavel))}${L("Preço de avaliação",m.valor!=null&&m.valor!==""?Number(m.valor).toLocaleString("pt-PT")+" Kz":"")}${L("Valor total (qtd × preço)",m.valor!=null&&m.valor!==""?Number((Number(m.valor)||0)*(Number(m.qtd)||0)).toLocaleString("pt-PT")+" Kz":"")}
+    ${L("Nº de série",esc(m.serie))}${L("Marca/modelo",esc(m.marca))}${L("Código QR/barras",esc(m.codBarra))}
+    ${L("Observações",esc(m.obs))}${L("Criado por",esc(m.criadoPor)+" em "+dataHoraPT(m.criadoEm))}
+    ${L("Última atualização",dataHoraPT(m.atualizadoEm))}
+    <h3 style="margin-top:14px;font-size:14px">Histórico de movimentações (imutável)</h3>
+    ${movs.length?movs.map(v=>`<div class="detLinha"><b>${dataHoraPT(v.data)}</b><span>${esc(v.tipo)} — ${esc(v.detalhe)} (${esc(v.usuario)})</span></div>`).join(""):'<div class="detLinha"><span>Sem registos.</span></div>'}
+    <div class="acoesForm"><button class="btn-sec" onclick="fichaKardex('${m.uuid}')">📒 Ficha / kardex</button>${pode.moverStock(m.area)?`<button class="btn-verde" onclick="movStockRapido('${m.uuid}','Entrada')">+ Entrada</button><button class="btn-vermelho" onclick="movStockRapido('${m.uuid}','Saída')">− Saída</button>`:""}${m.codigo?`<button class="btn-sec" onclick="etiquetaUm('${m.uuid}')">🏷️ Etiqueta QR</button>`:""}${pode.eliminar()?`<button class="btn-vermelho" onclick="eliminarMaterial('${m.uuid}')">🗑️ Eliminar permanentemente</button>`:""}<button class="btn-sec" onclick="fecharModal()">Fechar</button></div>`;
+  document.getElementById("modalDet").classList.add("aberto");
+}
+function fecharModal(){pararScanner();document.getElementById("modalDet").classList.remove("aberto");}
+async function abrirImagem(u){
+  const m=await dbGet("materiais",u);
+  if(!m||!m.foto){flash("Este item não tem imagem associada.");return;}
+  const semImg="this.style.display='none';this.nextElementSibling.style.display='block'";
+  document.getElementById("modalConteudo").innerHTML=
+    `<h3>${esc(m.codigo)||""} ${esc(m.nome)}</h3>
+    <img src="${m.foto}" style="max-width:100%;max-height:68vh;border-radius:8px;display:block;margin:auto" onerror="${semImg}">
+    <p style="display:none;color:var(--vermelho);font-size:14px">Não foi possível carregar a imagem. Verifique se o ficheiro está na pasta de imagens do servidor (consulte o LEIA-ME). Nota: ficheiros <b>.HEIC</b> não são apresentados pelos navegadores.</p>
+    ${m.valor!=null&&m.valor!==""?`<p style="margin-top:8px"><b>Preço de avaliação:</b> ${Number(m.valor).toLocaleString("pt-PT")} Kz</p>`:""}
+    <div class="acoesForm"><button class="btn-sec" onclick="verDetalhes('${m.uuid}')">Ver ficha completa</button><button class="btn-sec" onclick="fecharModal()">Fechar</button></div>`;
+  document.getElementById("modalDet").classList.add("aberto");
+}
+
+/* ================= DESCARTE (com pareceres formais e evidências) ================= */
+let fotosExtraTemp=[];
+async function pedirDescarte(u){
+  const m=await dbGet("materiais",u);
+  if(!pode.editar(m?.area)){flash("Sem permissão para pedir o descarte deste material.");return;}
+  fotosExtraTemp=[];
+  const exigeSerie=m.area==="Informática", exigeRisco=["QSSA","Laboratório"].includes(m.area);
+  document.getElementById("modalConteudo").innerHTML=
+    `<h3>Pedido de descarte — ${esc(m.codigo)||esc(m.nome)}</h3>
+    <p style="font-size:14px;color:var(--cinza)">${esc(m.nome)} · ${esc(m.area)} · ${m.qtd} ${esc(m.unidade||"")}</p>
+    ${exigeSerie&&!m.serie?'<p class="aviso" style="background:var(--vermelho-claro);color:var(--vermelho)"><b>Bloqueado:</b> equipamento informático sem número de série. Edite o material e preencha o nº de série antes do descarte.</p>':""}
+    <label>Motivo do descarte *</label><textarea id="dMotivo" rows="2"></textarea>
+    <label>Parecer do responsável da área</label><textarea id="dParecerArea" rows="2"></textarea>
+    <label>Evidências fotográficas adicionais (até 4)</label>
+    <input type="file" accept="image/*" capture="environment" multiple onchange="addFotosExtra(this)">
+    <div class="miniFotos" id="miniFotos"></div>
+    ${exigeRisco?'<label style="margin-top:12px"><input type="checkbox" id="dRisco" style="width:auto;margin-right:6px">Confirmo que foi feita a avaliação de risco (segurança/ambiente) *</label>':""}
+    ${exigeSerie?'<label style="margin-top:12px"><input type="checkbox" id="dAutoriza" style="width:auto;margin-right:6px">Confirmo a autorização de abate do equipamento informático *</label>':""}
+    <div class="acoesForm">
+      ${exigeSerie&&!m.serie?"":`<button class="btn-vermelho" onclick="confirmarDescarte('${u}',${exigeRisco},${exigeSerie})">Submeter pedido</button>`}
+      <button class="btn-sec" onclick="fecharModal()">Cancelar</button>
+    </div>`;
+  document.getElementById("modalDet").classList.add("aberto");
+}
+async function addFotosExtra(input){
+  for(const f of [...input.files].slice(0,4-fotosExtraTemp.length))
+    fotosExtraTemp.push(await redimensionarImagem(f,700));
+  document.getElementById("miniFotos").innerHTML=fotosExtraTemp.map(f=>`<img src="${f}">`).join("");
+}
+async function confirmarDescarte(u,exigeRisco,exigeSerie){
+  const motivo=document.getElementById("dMotivo").value.trim();
+  if(!motivo){flash("Indique o motivo do descarte.");return;}
+  if(exigeRisco&&!document.getElementById("dRisco").checked){flash("Confirme a avaliação de risco (QSSA/Laboratório).");return;}
+  if(exigeSerie&&!document.getElementById("dAutoriza").checked){flash("Confirme a autorização de abate (Informática).");return;}
+  const m=await dbGet("materiais",u);
+  await guardarEEnviar("descartes",{uuid:novoUuid(),materialUuid:u,codigo:m.codigo,nome:m.nome,area:m.area,qtd:m.qtd,
+    estadoMaterial:m.estado,motivo,parecerArea:document.getElementById("dParecerArea").value.trim(),parecerQSSA:"",
+    fotosExtra:JSON.stringify(fotosExtraTemp),estadoPedido:"Pendente",dataSolicitacao:agora(),solicitante:sessao.nome,
+    atualizadoEm:agora(),apagado:0});
+  m.estado="Para descarte";m.atualizadoEm=agora();await guardarEEnviar("materiais",m);
+  await registarMovimento(m,"Pedido de descarte","Motivo: "+motivo);
+  await criarNotificacao(`Novo pedido de descarte: ${m.codigo||m.nome} (${m.area}) — solicitado por ${sessao.nome}.`);
+  fecharModal();flash("Pedido de descarte submetido.");renderMateriais();
+}
+async function renderDescartes(){
+  const ds=(await dbAll("descartes")).filter(d=>!d.apagado).sort((a,b)=>b.dataSolicitacao.localeCompare(a.dataSolicitacao));
+  const alvo=document.getElementById("listaDescartes");
+  if(!ds.length){alvo.innerHTML='<div class="vazio">Sem pedidos de descarte. Os pedidos são criados a partir da lista de materiais.</div>';return;}
+  const corPed={Pendente:"et-amarelo","Em análise":"et-azul",Aprovado:"et-verde",Rejeitado:"et-vermelho",Descartado:"et-cinza"};
+  const infoP=aplicarPaginacao("descartes",ds);
+  const barP=barraPaginacao("descartes",infoP);
+  alvo.innerHTML=barP+`<table><thead><tr><th>Código</th><th>Material</th><th>Área</th><th>Motivo</th><th>Solicitado</th><th>Estado</th><th></th></tr></thead><tbody>`+
+    infoP.slice.map(d=>`<tr>
+      <td><b>${esc(d.codigo)||"—"}</b></td><td>${esc(d.nome)}</td><td>${esc(d.area)}</td>
+      <td style="max-width:200px">${esc(d.motivo)}</td>
+      <td>${dataPT(d.dataSolicitacao)}<br><span style="font-size:12px;color:var(--cinza)">${esc(d.solicitante)}</span></td>
+      <td><span class="etiqueta ${corPed[d.estadoPedido]}">${esc(d.estadoPedido)}</span></td>
+      <td style="white-space:nowrap">
+        <button class="btn-sec btn-mini" onclick="verPedido('${d.uuid}')">Ver / pareceres</button>
+        ${pode.aprovar(d.area)?`<select onchange="mudarEstadoDescarte('${d.uuid}',this.value)" style="min-width:118px;margin-top:4px">
+          ${["Pendente","Em análise","Aprovado","Rejeitado","Descartado"].map(e=>`<option${e===d.estadoPedido?" selected":""}>${e}</option>`).join("")}</select>`:""}
+      </td></tr>`).join("")+`</tbody></table>`+barP;
+}
+async function verPedido(u){
+  const d=await dbGet("descartes",u);
+  const fotos=JSON.parse(d.fotosExtra||"[]");
+  const edArea=pode.aprovar(d.area),edQssa=pode.parecerQSSA();
+  const L=(r,v)=>`<div class="detLinha"><b>${r}</b><span>${v||"—"}</span></div>`;
+  document.getElementById("modalConteudo").innerHTML=
+    `<h3>Pedido de descarte — ${esc(d.codigo)||esc(d.nome)}</h3>
+    ${L("Material",esc(d.nome)+" · "+esc(d.area)+" · "+d.qtd)}
+    ${L("Estado do material",esc(d.estadoMaterial))}${L("Motivo",esc(d.motivo))}
+    ${L("Solicitado",dataHoraPT(d.dataSolicitacao)+" por "+esc(d.solicitante))}
+    ${L("Estado do pedido",esc(d.estadoPedido))}
+    <label>Parecer do responsável da área</label>
+    <textarea id="pArea" rows="2" ${edArea?"":"disabled"}>${esc(d.parecerArea)}</textarea>
+    <label>Parecer QSSA</label>
+    <textarea id="pQSSA" rows="2" ${edQssa?"":"disabled"}>${esc(d.parecerQSSA)}</textarea>
+    ${fotos.length?'<label>Evidências fotográficas</label><div class="miniFotos">'+fotos.map(f=>`<img src="${f}" onclick="window.open('${f}')">`).join("")+"</div>":""}
+    <div class="acoesForm">
+      ${edArea||edQssa?`<button class="btn" onclick="guardarPareceres('${u}')">Guardar parecer autorizado</button>`:""}
+      <button class="btn-sec" onclick="fecharModal()">Fechar</button>
+    </div>`;
+  document.getElementById("modalDet").classList.add("aberto");
+}
+async function guardarPareceres(u){
+  const d=await dbGet("descartes",u);
+  if(pode.aprovar(d.area))d.parecerArea=document.getElementById("pArea").value.trim();
+  if(pode.parecerQSSA())d.parecerQSSA=document.getElementById("pQSSA").value.trim();
+  d.atualizadoEm=agora();
+  await guardarEEnviar("descartes",d);
+  await registarMovimento({uuid:d.materialUuid,codigo:d.codigo,nome:d.nome},"Parecer registado","Pareceres do pedido de descarte atualizados");
+  fecharModal();flash("Pareceres guardados.");renderDescartes();
+}
+async function mudarEstadoDescarte(u,novo){
+  const d=await dbGet("descartes",u);
+  if(!pode.aprovar(d?.area)){flash("Sem permissão para alterar este pedido.");return;}
+  d.estadoPedido=novo;d.atualizadoEm=agora();
+  await guardarEEnviar("descartes",d);
+  if(novo==="Rejeitado"){
+    const m=await dbGet("materiais",d.materialUuid);
+    if(m){m.estado="Sem uso / avaliar reaproveitamento";m.atualizadoEm=agora();await guardarEEnviar("materiais",m);}
+  }
+  await registarMovimento({uuid:d.materialUuid,codigo:d.codigo,nome:d.nome},"Descarte: "+novo,"Estado do pedido alterado para "+novo+" por "+sessao.nome);
+  await criarNotificacao(`Pedido de descarte ${d.codigo||d.nome}: ${novo} (por ${sessao.nome}).`);
+  flash("Pedido atualizado para "+novo+".");renderDescartes();
+}
+
+/* ================= LEITURA DE QR / CÓDIGO DE BARRAS ================= */
+let scanStream=null,scanAtivo=false;
+async function abrirScanner(){
+  document.getElementById("modalConteudo").innerHTML=
+    `<h3>Ler QR / código de barras</h3>
+    <p style="font-size:13.5px;color:var(--cinza);margin-bottom:8px">Aponte a câmara para a etiqueta do material.</p>
+    <video id="videoScan" playsinline muted></video>
+    <div class="acoesForm"><button class="btn-sec" onclick="fecharModal()">Cancelar</button></div>`;
+  document.getElementById("modalDet").classList.add("aberto");
+  try{
+    scanStream=await navigator.mediaDevices.getUserMedia({video:{facingMode:"environment"}});
+    const v=document.getElementById("videoScan");
+    v.srcObject=scanStream;await v.play();scanAtivo=true;cicloScan(v);
+  }catch(e){
+    document.getElementById("modalConteudo").innerHTML=
+      `<h3>Câmara indisponível</h3><p style="font-size:14px">O navegador bloqueou a câmara. No acesso por rede (http://IP), ative a exceção indicada no manual de instalação (chrome://flags) ou use o endereço https. Em alternativa, pesquise o código manualmente na lista de materiais.</p>
+      <div class="acoesForm"><button class="btn-sec" onclick="fecharModal()">Fechar</button></div>`;
+  }
+}
+function pararScanner(){
+  scanAtivo=false;
+  if(scanStream){scanStream.getTracks().forEach(t=>t.stop());scanStream=null;}
+}
+function cicloScan(v){
+  if(!scanAtivo)return;
+  const c=document.createElement("canvas");
+  c.width=v.videoWidth;c.height=v.videoHeight;
+  if(c.width){
+    const ctx=c.getContext("2d");ctx.drawImage(v,0,0);
+    const img=ctx.getImageData(0,0,c.width,c.height);
+    const cod=jsQR(img.data,img.width,img.height);
+    if(cod&&cod.data){procurarPorCodigo(cod.data.trim());return;}
+  }
+  requestAnimationFrame(()=>cicloScan(v));
+}
+async function procurarPorCodigo(texto){
+  pararScanner();
+  const mats=await vivos();
+  const m=mats.find(x=>x.codigo===texto||x.codBarra===texto);
+  if(m){flash("Material encontrado: "+m.codigo);verDetalhes(m.uuid);}
+  else{
+    fecharModal();flash("Código '"+texto+"' não encontrado no inventário.");
+    document.getElementById("fPesquisa").value=texto;mostrarVista("v-materiais");
+  }
+}
+
+/* ================= ETIQUETAS QR ================= */
+function qrDataURL(texto,px){
+  const qr=qrcode(0,"M");qr.addData(texto);qr.make();
+  const mods=qr.getModuleCount(),cel=Math.floor(px/(mods+8));
+  return qr.createDataURL(cel,cel*4);
+}
+function janelaEtiquetas(lista){
+  const w=window.open("","_blank");
+  w.document.write(`<html><head><title>Etiquetas QR — Inventário TON</title><style>
+    body{font-family:Segoe UI,Arial,sans-serif;display:flex;flex-wrap:wrap;gap:6mm;padding:8mm}
+    .et{width:62mm;border:1px solid #999;border-radius:2mm;padding:3mm;text-align:center;page-break-inside:avoid}
+    .et img{width:30mm;height:30mm}
+    .cod{font-weight:700;font-size:12pt;color:#0E2A47}
+    .nm{font-size:9pt;margin-top:1mm}
+    .ar{font-size:8pt;color:#555}
+  </style></head><body>`+
+  lista.map(m=>`<div class="et"><img src="${qrDataURL(m.codigo,240)}"><div class="cod">${esc(m.codigo)}</div><div class="nm">${esc(m.nome)}</div><div class="ar">${esc(m.area)} · TON</div></div>`).join("")+
+  `<script>onload=()=>print()<\/script></body></html>`);
+  w.document.close();
+}
+async function etiquetaUm(u){const m=await dbGet("materiais",u);if(m&&m.codigo)janelaEtiquetas([m]);}
+function imprimirEtiquetas(){
+  const comCodigo=filtradosAtuais.filter(m=>m.codigo);
+  if(!comCodigo.length){flash("Sem materiais com código nesta lista (sincronize primeiro).");return;}
+  if(comCodigo.length>60&&!confirm(comCodigo.length+" etiquetas — continuar?"))return;
+  janelaEtiquetas(comCodigo);
+}
+
+/* ================= DASHBOARD ================= */
+async function renderDashboard(){
+  const mats=await vivos(),ds=(await dbAll("descartes")).filter(d=>!d.apagado);
+  const pend=(await dbAll("fila")).length;
+  const movsMes=(await dbAll("movstock")).filter(x=>!x.apagado&&String(x.data||"").slice(0,7)===new Date().toISOString().slice(0,7)).length;
+  const conta=f=>mats.filter(f).length;
+  document.getElementById("dashCartoes").innerHTML=
+    `<div class="cartao"><div class="num">${mats.length}</div><div class="rot">Materiais cadastrados</div></div>
+     <div class="cartao verde"><div class="num">${conta(m=>["Novo","Bom"].includes(m.estado))}</div><div class="rot">Em bom estado</div></div>
+     <div class="cartao laranja"><div class="num">${conta(m=>m.estado==="Obsoleto")}</div><div class="rot">Obsoletos</div></div>
+     <div class="cartao vermelho"><div class="num">${conta(m=>m.estado==="Para descarte")}</div><div class="rot">Para descarte</div></div>
+     <div class="cartao amarelo"><div class="num">${conta(m=>!m.dataEntrada||!m.responsavel)}</div><div class="rot">Informação incompleta</div></div>
+     <div class="cartao"><div class="num">${ds.filter(d=>["Pendente","Em análise"].includes(d.estadoPedido)).length}</div><div class="rot">Pedidos de descarte abertos</div></div>
+     <div class="cartao verde"><div class="num">${movsMes}</div><div class="rot">Movimentos de stock (mês)</div></div>
+     ${pend?`<div class="cartao amarelo"><div class="num">${pend}</div><div class="rot">Alterações por sincronizar</div></div>`:""}`;
+  const porArea=AREAS.map(a=>[a,conta(m=>m.area===a)]).filter(x=>x[1]>0);
+  const max=Math.max(1,...porArea.map(x=>x[1]));
+  document.getElementById("dashAreas").innerHTML=porArea.length?porArea.map(([a,n])=>
+    `<div class="barraArea"><span class="nomeA">${a}</span><div class="trilho"><div class="preench" style="width:${n/max*100}%"></div></div><span class="qtd">${n}</span></div>`).join("")
+    :'<span style="color:var(--cinza);font-size:14px">Ainda sem materiais cadastrados.</span>';
+  const ult=[...mats].sort((a,b)=>(b.criadoEm||"").localeCompare(a.criadoEm||"")).slice(0,5);
+  document.getElementById("dashUltimos").innerHTML=ult.length?`<table><thead><tr><th>Código</th><th>Material</th><th>Área</th><th>Estado</th><th>Cadastrado</th></tr></thead><tbody>`+
+    ult.map(m=>`<tr><td><b>${esc(m.codigo)||"—"}</b></td><td>${esc(m.nome)}</td><td>${esc(m.area)}</td>
+    <td><span class="etiqueta ${COR_ESTADO[m.estado]||"et-cinza"}">${esc(m.estado)}</span></td><td>${dataHoraPT(m.criadoEm)}</td></tr>`).join("")+`</tbody></table>`
+    :'<div class="vazio" style="box-shadow:none">O inventário está vazio. Comece em <b>Materiais</b> ou importe via Excel em <b>Configurações</b>.</div>';
+}
+
+/* ================= RELATÓRIOS ================= */
+let relAtual={colunas:[],linhas:[],nome:"",titulo:"",filtrosTexto:""};
+/* Tipos de relatório baseados na lista de materiais (aceitam a barra de filtros) */
+const REL_MATERIAL=["geral","area","obsoletos","semdata","semresp","estado","local"];
+/* Lê os valores atuais dos controlos de filtro (vazio quando não existem) */
+function relValoresFiltro(){
+  const g=id=>{const el=document.getElementById(id);return el?el.value:"";};
+  return {q:g("relPesquisa").trim(),area:g("relArea"),estado:g("relEstado"),categoria:g("relCategoria"),
+    local:g("relLocal"),responsavel:g("relResp"),de:g("relDataDe"),ate:g("relDataAte"),pmin:g("relPrecoMin"),pmax:g("relPrecoMax")};
+}
+/* Monta a barra de filtros só quando muda o tipo de relatório (evita perder o foco na pesquisa ao vivo) */
+function montarBarraRel(tipo,mats){
+  const extra=document.getElementById("relFiltroExtra");
+  if(!REL_MATERIAL.includes(tipo)){extra.innerHTML="";extra.dataset.tipo="";return;}
+  if(extra.dataset.tipo===tipo)return;
+  const cats=[...new Set(mats.map(m=>m.categoria).filter(Boolean))].sort((a,b)=>a.localeCompare(b));
+  const locs=[...new Set(mats.map(m=>m.local).filter(Boolean))].sort((a,b)=>a.localeCompare(b));
+  const resps=[...new Set(mats.map(m=>m.responsavel).filter(Boolean))].sort((a,b)=>a.localeCompare(b));
+  const opcoes=(arr,todos)=>`<option value="">${todos}</option>`+arr.map(x=>`<option>${esc(x)}</option>`).join("");
+  const ctrlArea=tipo==="area"?`<select id="relArea" onchange="renderRelatorio()" title="Área">${AREAS.map(a=>`<option>${a}</option>`).join("")}</select>`:"";
+  extra.innerHTML=`<div class="filtros">
+    <input id="relPesquisa" placeholder="Pesquisar nome, código, descrição, marca…" oninput="renderRelatorio()">
+    ${ctrlArea}
+    <select id="relEstado" onchange="renderRelatorio()" title="Estado de conservação">${opcoes(ESTADOS,"Todos os estados")}</select>
+    <select id="relCategoria" onchange="renderRelatorio()" title="Categoria">${opcoes(cats,"Todas as categorias")}</select>
+    <select id="relLocal" onchange="renderRelatorio()" title="Localização">${opcoes(locs,"Todas as localizações")}</select>
+    <select id="relResp" onchange="renderRelatorio()" title="Responsável">${opcoes(resps,"Todos os responsáveis")}</select>
+    <span style="display:flex;align-items:center;gap:6px;font-size:13px;color:var(--cinza);flex:1 1 160px;min-width:160px"><span style="white-space:nowrap">Entrada de</span><input id="relDataDe" type="date" onchange="renderRelatorio()" title="Data de entrada — de" style="flex:1;min-width:120px"></span>
+    <span style="display:flex;align-items:center;gap:6px;font-size:13px;color:var(--cinza);flex:1 1 140px;min-width:140px"><span style="white-space:nowrap">até</span><input id="relDataAte" type="date" onchange="renderRelatorio()" title="Data de entrada — até" style="flex:1;min-width:120px"></span>
+    <input id="relPrecoMin" type="number" min="0" step="0.01" placeholder="Preço mín. (Kz)" onchange="renderRelatorio()" title="Preço de avaliação — mínimo">
+    <input id="relPrecoMax" type="number" min="0" step="0.01" placeholder="Preço máx. (Kz)" onchange="renderRelatorio()" title="Preço de avaliação — máximo">
+    <button class="btn-sec btn-mini" style="flex:0 0 auto" onclick="limparFiltrosRel()">Limpar filtros</button>
+  </div>`;
+  extra.dataset.tipo=tipo;
+}
+async function renderRelatorio(){
+  const tipo=document.getElementById("tipoRel").value;
+  const mats=await vivos();
+  const colsBase=["Código","Nome","Área","Categoria","Qtd","Unidade","Estado","Localização","Data entrada","Responsável","Preço aval. (Kz)","Valor total (Kz)"];
+  const linhaBase=m=>[m.codigo||"—",m.nome,m.area,m.categoria,m.qtd,m.unidade,m.estado,m.local,dataPT(m.dataEntrada),m.responsavel,m.valor??"",(m.valor!=null&&m.valor!=="")?(Number(m.valor)||0)*(Number(m.qtd)||0):""];
+  const titulos={geral:"Inventário geral do armazém",area:"Inventário por área",obsoletos:"Materiais obsoletos",
+    descarte:"Materiais propostos para descarte",semdata:"Materiais sem data de entrada",semresp:"Materiais sem responsável identificado",
+    estado:"Materiais por estado de conservação",local:"Materiais por localização",historico:"Histórico de entradas e atualizações"};
+  let cols=colsBase,linhas=[],titulo=titulos[tipo],filtrosTexto="";
+
+  montarBarraRel(tipo,mats);
+  const f=relValoresFiltro();
+  const fArea=tipo==="area"?((document.getElementById("relArea")||{}).value||AREAS[0]):"";
+
+  if(tipo==="descarte"){
+    const ds=(await dbAll("descartes")).filter(d=>!d.apagado);
+    cols=["Código","Material","Área","Qtd","Estado do material","Motivo","Parecer da área","Parecer QSSA","Estado do pedido","Data","Solicitante"];
+    linhas=ds.map(d=>[d.codigo||"—",d.nome,d.area,d.qtd,d.estadoMaterial,d.motivo,d.parecerArea,d.parecerQSSA,d.estadoPedido,dataPT(d.dataSolicitacao),d.solicitante]);
+  }else if(tipo==="historico"){
+    const movs=(await dbAll("movimentos")).sort((a,b)=>b.data.localeCompare(a.data));
+    cols=["Data/hora","Código","Material","Tipo","Detalhe","Utilizador"];
+    linhas=movs.map(v=>[dataHoraPT(v.data),v.codigo,v.nomeMaterial,v.tipo,v.detalhe,v.usuario]);
+  }else{
+    /* Relatórios de materiais: filtro-base do tipo + filtros combináveis */
+    let lista=mats.slice();
+    if(tipo==="area"){lista=lista.filter(m=>m.area===fArea);titulo+=" — "+fArea;}
+    if(tipo==="obsoletos")lista=lista.filter(m=>m.estado==="Obsoleto");
+    if(tipo==="semdata")lista=lista.filter(m=>!m.dataEntrada);
+    if(tipo==="semresp")lista=lista.filter(m=>!m.responsavel);
+    const q=f.q.toLowerCase(),de=f.de,ate=f.ate;
+    const pmin=(f.pmin===""||isNaN(Number(f.pmin)))?null:Number(f.pmin);
+    const pmax=(f.pmax===""||isNaN(Number(f.pmax)))?null:Number(f.pmax);
+    lista=lista.filter(m=>{
+      if(q&&![m.nome,m.codigo,m.descricao,m.categoria,m.marca,m.serie,m.codBarra].join(" ").toLowerCase().includes(q))return false;
+      if(f.estado&&m.estado!==f.estado)return false;
+      if(f.categoria&&m.categoria!==f.categoria)return false;
+      if(f.local&&m.local!==f.local)return false;
+      if(f.responsavel&&m.responsavel!==f.responsavel)return false;
+      const d=m.dataEntrada||"";
+      if(de&&(!d||d<de))return false;
+      if(ate&&(!d||d>ate))return false;
+      const v=(m.valor===""||m.valor==null)?null:Number(m.valor);
+      if(pmin!=null&&(v==null||v<pmin))return false;
+      if(pmax!=null&&(v==null||v>pmax))return false;
+      return true;
+    });
+    if(tipo==="estado")lista.sort((a,b)=>ESTADOS.indexOf(a.estado)-ESTADOS.indexOf(b.estado));
+    if(tipo==="local")lista.sort((a,b)=>(a.local||"zzz").localeCompare(b.local||"zzz"));
+    linhas=lista.map(linhaBase);
+    const partes=[];
+    if(f.q)partes.push('Pesquisa: "'+f.q+'"');
+    if(f.estado)partes.push("Estado: "+f.estado);
+    if(f.categoria)partes.push("Categoria: "+f.categoria);
+    if(f.local)partes.push("Localização: "+f.local);
+    if(f.responsavel)partes.push("Responsável: "+f.responsavel);
+    if(de||ate)partes.push("Entrada: "+(de?dataPT(de):"…")+" a "+(ate?dataPT(ate):"…"));
+    if(pmin!=null||pmax!=null)partes.push("Preço: "+(pmin!=null?pmin.toLocaleString("pt-PT"):"…")+" a "+(pmax!=null?pmax.toLocaleString("pt-PT"):"…")+" Kz");
+    filtrosTexto=partes.join("  ·  ");
+  }
+  relAtual={colunas:cols,linhas,nome:tipo,titulo,filtrosTexto};
+  const info=filtrosTexto
+    ?`<p style="font-size:13px;color:var(--cinza);margin:6px 0">Filtros aplicados: ${esc(filtrosTexto)}  ·  ${linhas.length} registo(s)</p>`:"";
+  const infoP=aplicarPaginacao("relatorio",linhas,tipo+"|"+filtrosTexto);
+  const barP=barraPaginacao("relatorio",infoP);
+  document.getElementById("tabelaRel").innerHTML=linhas.length?
+    info+barP+`<table><thead><tr>${cols.map(c=>`<th>${c}</th>`).join("")}</tr></thead><tbody>`+
+    infoP.slice.map(l=>`<tr>${l.map(c=>`<td>${esc(c)}</td>`).join("")}</tr>`).join("")+`</tbody></table>`+barP
+    :info+'<div class="vazio">Sem dados para este relatório'+(filtrosTexto?" com os filtros selecionados.":".")+'</div>';
+}
+function limparFiltrosRel(){
+  ["relPesquisa","relEstado","relCategoria","relLocal","relResp","relDataDe","relDataAte","relPrecoMin","relPrecoMax"].forEach(id=>{const el=document.getElementById(id);if(el)el.value="";});
+  renderRelatorio();
+}
+function descarregarBlob(nome,blob){
+  const a=document.createElement("a");a.href=URL.createObjectURL(blob);a.download=nome;a.click();
+  setTimeout(()=>URL.revokeObjectURL(a.href),5000);
+}
+const dataFich=()=>new Date().toISOString().slice(0,10);
+
+/* ---- Excel (.xlsx) com formatação institucional ---- */
+async function exportarExcel(){
+  if(!relAtual.linhas.length){flash("Sem dados para exportar.");return;}
+  const wb=new ExcelJS.Workbook();
+  wb.creator="Inventário TON";wb.created=new Date();
+  const ws=wb.addWorksheet(relAtual.titulo.slice(0,30),{pageSetup:{orientation:"landscape",fitToPage:true,fitToWidth:1}});
+  const nCols=relAtual.colunas.length;
+  const AZUL="FF0E2A47",AZUL_CLARO="FFE8EEF5",CINZA="FF5C6670";
+  const borda={style:"thin",color:{argb:"FFC7D0D9"}};
+  // Cabeçalho institucional
+  ws.mergeCells(1,1,1,nCols);
+  const t1=ws.getCell(1,1);
+  t1.value="SONANGOL DISTRIBUIÇÃO E COMERCIALIZAÇÃO — TERMINAL OCEÂNICO DO NAMIBE";
+  t1.font={bold:true,size:13,color:{argb:"FFFFFFFF"}};
+  t1.fill={type:"pattern",pattern:"solid",fgColor:{argb:AZUL}};
+  t1.alignment={horizontal:"center",vertical:"middle"};
+  ws.getRow(1).height=26;
+  ws.mergeCells(2,1,2,nCols);
+  const t2=ws.getCell(2,1);
+  t2.value=relAtual.titulo+"  ·  emitido em "+new Date().toLocaleString("pt-PT")+"  ·  por "+sessao.nome;
+  t2.font={italic:true,size:10,color:{argb:CINZA}};
+  t2.alignment={horizontal:"center"};
+  // Filtros aplicados (linha 3) + total de registos
+  ws.mergeCells(3,1,3,nCols);
+  const t3=ws.getCell(3,1);
+  t3.value=(relAtual.filtrosTexto?"Filtros aplicados:  "+relAtual.filtrosTexto+"      ·      ":"")+"Total de registos: "+relAtual.linhas.length;
+  t3.font={italic:true,bold:!!relAtual.filtrosTexto,size:10,color:{argb:CINZA}};
+  t3.alignment={horizontal:"center"};
+  // Cabeçalhos das colunas
+  const linhaCab=ws.getRow(4);
+  relAtual.colunas.forEach((c,i)=>{
+    const cel=linhaCab.getCell(i+1);
+    cel.value=c;cel.font={bold:true,size:10,color:{argb:"FFFFFFFF"}};
+    cel.fill={type:"pattern",pattern:"solid",fgColor:{argb:AZUL}};
+    cel.border={top:borda,bottom:borda,left:borda,right:borda};
+    cel.alignment={vertical:"middle",wrapText:true};
+  });
+  // Dados com zebra
+  relAtual.linhas.forEach((l,li)=>{
+    const r=ws.getRow(5+li);
+    l.forEach((v,ci)=>{
+      const cel=r.getCell(ci+1);cel.value=v??"";
+      cel.border={top:borda,bottom:borda,left:borda,right:borda};
+      cel.font={size:10};
+      if(li%2===1)cel.fill={type:"pattern",pattern:"solid",fgColor:{argb:AZUL_CLARO}};
+      cel.alignment={vertical:"top",wrapText:true};
+    });
+  });
+  // Larguras: estimadas pelo conteúdo
+  relAtual.colunas.forEach((c,i)=>{
+    const maxLen=Math.max(c.length,...relAtual.linhas.map(l=>String(l[i]??"").length));
+    ws.getColumn(i+1).width=Math.min(42,Math.max(10,maxLen+2));
+  });
+  ws.getCell(5+relAtual.linhas.length+1,1).value="Total de registos: "+relAtual.linhas.length;
+  const buf=await wb.xlsx.writeBuffer();
+  descarregarBlob("Relatorio_"+relAtual.nome+"_"+dataFich()+".xlsx",
+    new Blob([buf],{type:"application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"}));
+  flash("Excel exportado com formatação institucional.");
+}
+
+/* ---- PDF com logótipo ---- */
+let logoDataURL=null;
+async function obterLogo(){
+  if(logoDataURL)return logoDataURL;
+  try{
+    const r=await fetch("img/logo.png");const b=await r.blob();
+    logoDataURL=await new Promise(res=>{const rd=new FileReader();rd.onload=()=>res(rd.result);rd.readAsDataURL(b);});
+  }catch(e){logoDataURL=null;}
+  return logoDataURL;
+}
+async function exportarPDF(){
+  if(!relAtual.linhas.length){flash("Sem dados para exportar.");return;}
+  const {jsPDF}=window.jspdf;
+  const paisagem=relAtual.colunas.length>7;
+  const doc=new jsPDF({orientation:paisagem?"landscape":"portrait",unit:"mm",format:"a4"});
+  const logo=await obterLogo();
+  const largura=doc.internal.pageSize.getWidth();
+  if(logo)doc.addImage(logo,"PNG",14,9,60,14);
+  doc.setFontSize(13);doc.setTextColor(14,42,71);doc.setFont(undefined,"bold");
+  doc.text(relAtual.titulo,14,31);
+  doc.setFontSize(9);doc.setFont(undefined,"normal");doc.setTextColor(92,102,112);
+  doc.text("Emitido em "+new Date().toLocaleString("pt-PT")+" por "+sessao.nome+" · Inventário TON v2.0",14,36.5);
+  let inicioTabela=40;
+  const rodapeInfo=(relAtual.filtrosTexto?"Filtros aplicados:  "+relAtual.filtrosTexto+"      ·      ":"")+"Total de registos: "+relAtual.linhas.length;
+  doc.setFontSize(8);doc.setTextColor(92,102,112);doc.setFont(undefined,relAtual.filtrosTexto?"bold":"normal");
+  const linhasInfo=doc.splitTextToSize(rodapeInfo,largura-28);
+  doc.text(linhasInfo,14,40.5);
+  doc.setFont(undefined,"normal");
+  inicioTabela=40.5+linhasInfo.length*3.6+2;
+  doc.autoTable({
+    head:[relAtual.colunas],
+    body:relAtual.linhas.map(l=>l.map(v=>String(v??""))),
+    startY:inicioTabela,
+    styles:{fontSize:8,cellPadding:1.6,lineColor:[199,208,217],lineWidth:.15,textColor:[28,39,51]},
+    headStyles:{fillColor:[14,42,71],textColor:255,fontStyle:"bold",fontSize:8},
+    alternateRowStyles:{fillColor:[232,238,245]},
+    margin:{left:14,right:14},
+    didDrawPage:d=>{
+      doc.setFontSize(8);doc.setTextColor(120);
+      doc.text("Sonangol D&C — Terminal Oceânico do Namibe · página "+doc.internal.getNumberOfPages(),
+        largura-14,doc.internal.pageSize.getHeight()-7,{align:"right"});
+    }
+  });
+  doc.save("Relatorio_"+relAtual.nome+"_"+dataFich()+".pdf");
+  flash("PDF exportado com logótipo.");
+}
+
+/* ================= IMPORTAÇÃO EM MASSA VIA EXCEL ================= */
+const CABECALHOS_MODELO=["Nome*","Descrição","Área*","Categoria","Quantidade*","Unidade","Estado*","Localização","Data entrada (AAAA-MM-DD)","Origem","Responsável","Valor (Kz)","Nº série","Marca/modelo","Código barras","Observações"];
+async function descarregarModelo(){
+  const wb=new ExcelJS.Workbook();
+  const ws=wb.addWorksheet("Materiais");
+  const r=ws.getRow(1);
+  CABECALHOS_MODELO.forEach((c,i)=>{
+    const cel=r.getCell(i+1);cel.value=c;
+    cel.font={bold:true,color:{argb:"FFFFFFFF"}};
+    cel.fill={type:"pattern",pattern:"solid",fgColor:{argb:"FF0E2A47"}};
+    ws.getColumn(i+1).width=Math.max(14,c.length+2);
+  });
+  ws.addRow(["Capacete de segurança","Capacete classe B","QSSA","EPI",10,"un","Novo","Corredor B, Prateleira 1","2026-01-10","Compra local","Roni",5000,"","","",""]);
+  const wsAj=wb.addWorksheet("Valores válidos");
+  wsAj.getCell(1,1).value="Áreas:";wsAj.getCell(1,2).value=AREAS.join(" | ");
+  wsAj.getCell(2,1).value="Estados:";wsAj.getCell(2,2).value=ESTADOS.join(" | ");
+  wsAj.getCell(3,1).value="Unidades:";wsAj.getCell(3,2).value="un | cx | kg | L | m | par | rolo | conjunto";
+  const buf=await wb.xlsx.writeBuffer();
+  descarregarBlob("Modelo_Importacao_Inventario_TON.xlsx",new Blob([buf]));
+}
+async function importarExcel(input){
+  if(!pode.importar()){flash("O seu perfil não permite importar materiais.");input.value="";return;}
+  const f=input.files[0];if(!f)return;
+  const res=document.getElementById("resImport");
+  res.textContent="A processar…";
+  try{
+    const wb=new ExcelJS.Workbook();
+    await wb.xlsx.load(await f.arrayBuffer());
+    const ws=wb.worksheets[0];
+    let criados=0,erros=[];
+    for(let li=2;li<=ws.rowCount;li++){
+      const r=ws.getRow(li);
+      const v=i=>{const c=r.getCell(i).value;return c==null?"":(c.text||c.result||c).toString().trim();};
+      const nome=v(1);if(!nome)continue;
+      const area=v(3),estado=v(7);
+      if(!AREAS.includes(area)){erros.push(`Linha ${li}: área "${area}" inválida`);continue;}
+      if(!ESTADOS.includes(estado)){erros.push(`Linha ${li}: estado "${estado}" inválido`);continue;}
+      const m={uuid:novoUuid(),codigo:null,nome,descricao:v(2),area,categoria:v(4),
+        qtd:Number(v(5))||0,unidade:v(6)||"un",estado,local:v(8),
+        dataEntrada:v(9)?v(9).slice(0,10):"",origem:v(10),responsavel:v(11),
+        valor:v(12)?Number(v(12)):null,serie:v(13),marca:v(14),codBarra:v(15),obs:v(16),
+        foto:null,criadoPor:sessao.nome+" (importação)",criadoEm:agora(),atualizadoEm:agora(),apagado:0};
+      await dbPut("materiais",m);
+      await dbPut("fila",{tabela:"materiais",registo:m});
+      await dbPut("fila",{tabela:"movimentos",registo:{uuid:novoUuid(),materialUuid:m.uuid,codigo:"(pendente)",
+        nomeMaterial:m.nome,tipo:"Entrada / cadastro",detalhe:"Importado via Excel",usuario:sessao.nome,data:agora()}});
+      criados++;
+    }
+    sincronizar();
+    res.innerHTML=`<span class="etiqueta et-verde">${criados} materiais importados</span>`+
+      (erros.length?`<br><span style="color:var(--vermelho)">${erros.slice(0,8).join("<br>")}${erros.length>8?"<br>…":""}</span>`:"");
+    flash(criados+" materiais importados — códigos atribuídos na sincronização.");
+  }catch(e){res.innerHTML='<span style="color:var(--vermelho)">Ficheiro inválido — use o modelo fornecido.</span>';}
+  input.value="";
+}
+
+/* Deriva a área proprietária a partir da categoria da lista de avaliação. */
+function areaPorCategoria(cat,fallback){
+  const c=(cat||"").toLowerCase();
+  if(c.startsWith("informatica")||c.includes("informát"))return "Informática";
+  if(c.includes("escritorio")||c.includes("escritório"))return "Administração";
+  if(c.includes("epi")||c.includes("epc")||c.includes("combate")||c.includes("instrumentos")
+     ||c.includes("sinaliz")||c.includes("placas")||c.includes("medico")||c.includes("médico"))return "QSSA";
+  if(c.includes("equipamento")||c.includes("electric")||c.includes("elétric")||c.includes("metalic")
+     ||c.includes("metálic")||c.includes("cabos")||c.includes("baterias"))return "Manutenção";
+  return fallback||"Outra";
+}
+
+/* ---- Importar a lista de avaliação (deteta colunas pelo cabeçalho) ---- */
+async function importarAvaliacao(input){
+  if(!pode.importar()){flash("O seu perfil não permite importar materiais.");input.value="";return;}
+  const f=input.files[0];if(!f)return;
+  const res=document.getElementById("resAval");res.textContent="A processar…";
+  try{
+    const wb=new ExcelJS.Workbook();
+    await wb.xlsx.load(await f.arrayBuffer());
+    const txt=(r,i)=>{const c=r.getCell(i).value;return c==null?"":(c.text||c.result||c).toString().trim();};
+    const num=x=>{if(x==null||x==="")return null;if(typeof x==="number")return x;
+      if(typeof x==="object"&&x.result!=null&&typeof x.result==="number")return x.result;
+      let t=String(x).replace(/kz/ig,"").trim();
+      if(/,\d{1,2}\s*$/.test(t))t=t.replace(/\./g,"").replace(",",".");           // 1.234,56
+      else t=t.replace(/[.,](?=\d{3}(\D|$))/g,"");                                 // 1.234.567
+      t=t.replace(/[^\d.-]/g,"");const n=parseFloat(t);return isNaN(n)?null:n;};
+    // localizar a folha e a linha de cabeçalho (Item/Nome + Preço)
+    let ws=null,hdr=0,col={};
+    for(const sheet of wb.worksheets){
+      for(let li=1;li<=Math.min(25,sheet.rowCount);li++){
+        const r=sheet.getRow(li),mapa={};
+        for(let i=1;i<=Math.min(40,sheet.columnCount||40);i++){
+          const h=txt(r,i).toLowerCase();if(!h)continue;
+          if(!mapa.nome&&(h.includes("item")||h==="nome"||h.includes("descri")||h.includes("material")))mapa.nome=i;
+          else if(!mapa.categoria&&h.includes("categor"))mapa.categoria=i;
+          else if(!mapa.qtd&&(h.startsWith("qtd")||h.includes("quantid")))mapa.qtd=i;
+          else if(!mapa.valor&&(h.includes("preç")||h.includes("prec")||h.includes("valor"))&&!h.includes("total"))mapa.valor=i;
+          else if(!mapa.obs&&(h.includes("observ")||h.includes("nota")))mapa.obs=i;
+        }
+        if(mapa.nome&&mapa.valor){ws=sheet;hdr=li;col=mapa;break;}
+      }
+      if(ws)break;
+    }
+    if(!ws){res.innerHTML='<span style="color:var(--vermelho)">Não encontrei colunas reconhecíveis (Item/Nome + Preço). Confirme o ficheiro de avaliação.</span>';input.value="";return;}
+    const areaFallback=document.getElementById("impAvalArea").value||"Outra";
+    const estado=document.getElementById("impAvalEstado").value||"Usado";
+    const reExt=/\.(jpe?g|png|heic|bmp|gif|tiff?)$/i;
+    const limparNome=s=>String(s).replace(reExt,"").trim();
+    let criados=0,comImagem=0;
+    for(let li=hdr+1;li<=ws.rowCount;li++){
+      const r=ws.getRow(li);
+      const nomeFich=txt(r,col.nome);if(!nomeFich)continue;
+      if(/^total/i.test(nomeFich))continue;
+      const nome=limparNome(nomeFich);
+      const valor=col.valor?num(r.getCell(col.valor).value):null;
+      const qtd=col.qtd?(num(r.getCell(col.qtd).value)||1):1;
+      const categoria=col.categoria?txt(r,col.categoria):"";
+      const obs=col.obs?txt(r,col.obs):"";
+      const area=areaPorCategoria(categoria,areaFallback);
+      const foto=reExt.test(nomeFich)?("/imagens/"+encodeURIComponent(nomeFich)):null;
+      if(foto)comImagem++;
+      const m={uuid:novoUuid(),codigo:null,nome,descricao:"",area,categoria,
+        qtd,unidade:"un",estado,local:"",dataEntrada:"",origem:"Importação da lista de avaliação",
+        responsavel:"",valor,serie:"",marca:"",codBarra:"",obs,
+        foto,criadoPor:sessao.nome+" (avaliação)",criadoEm:agora(),atualizadoEm:agora(),apagado:0};
+      await dbPut("materiais",m);
+      await dbPut("fila",{tabela:"materiais",registo:m});
+      await dbPut("fila",{tabela:"movimentos",registo:{uuid:novoUuid(),materialUuid:m.uuid,codigo:"(pendente)",
+        nomeMaterial:m.nome,tipo:"Entrada / cadastro",detalhe:"Importado da lista de avaliação",usuario:sessao.nome,data:agora()}});
+      criados++;
+    }
+    sincronizar();
+    res.innerHTML=`<span class="etiqueta et-verde">${criados} itens importados</span> <span style="color:var(--cinza)">(área atribuída automaticamente pela categoria; ${comImagem} com imagem associada; preço de avaliação preenchido; folha "${esc(ws.name)}", cabeçalho linha ${hdr})</span>`;
+    flash(criados+" itens da avaliação importados — área automática e imagens ligadas.");
+  }catch(e){res.innerHTML='<span style="color:var(--vermelho)">Ficheiro inválido ou ilegível: '+esc(e.message||e)+'</span>';}
+  input.value="";
+}
+
+/* ================= CONFIG / UTILIZADORES ================= */
+async function alterarSenha(){
+  const ns=document.getElementById("novaSenha").value;
+  try{const r=await api("/api/alterar-senha",{novaSenha:ns});
+    document.getElementById("novaSenha").value="";
+    if(r.reautenticar){localStorage.removeItem("token");localStorage.removeItem("usuario");alert("Senha alterada. Entre novamente com a nova senha.");location.reload();return;}
+    flash("Senha alterada com segurança.");
+  }catch(e){flash(e.message==="Failed to fetch"?"A alteração de senha exige ligação ao servidor.":e.message);}
+}
+async function carregarDadosTeste(){
+  if(!confirm("Carregar 8 materiais de exemplo no servidor central?"))return;
+  try{await api("/api/seed",{});flash("Dados de exemplo criados.");sincronizar(true);}
+  catch(e){flash(e.message==="Failed to fetch"?"Exige ligação ao servidor.":e.message);}
+}
+async function criarUser(){
+  const g=id=>document.getElementById(id).value.trim();
+  const areas=[...document.getElementById("uAreas").selectedOptions].map(o=>o.value);
+  try{
+    await api("/api/usuarios",{nome:g("uNome"),login:g("uLogin"),senha:document.getElementById("uSenha").value,perfil:g("uPerfil"),areas});
+    ["uNome","uLogin","uSenha"].forEach(i=>document.getElementById(i).value="");
+    flash("Utilizador criado.");renderUsers();
+  }catch(e){flash(e.message==="Failed to fetch"?"A gestão de utilizadores exige ligação ao servidor.":e.message);}
+}
+let usersAtuais=[];
+async function renderUsers(){
+  try{
+    const users=await api("/api/usuarios");usersAtuais=users;
+    document.getElementById("listaUsers").innerHTML=
+      `<table><thead><tr><th>Nome</th><th>Login</th><th>Perfil</th><th>Áreas</th><th>Estado</th><th></th></tr></thead><tbody>`+
+      users.map(u=>`<tr><td>${esc(u.nome)}${u.trocarSenha?' <span class="etiqueta et-amarelo">troca de senha pendente</span>':""}</td><td>${esc(u.login)}</td><td>${PERFIS[u.perfil]||esc(u.perfil)}</td>
+        <td>${esc((u.areas||[]).map(a=>a==="*"?"Todas — atribuir área":a).join(", "))||"—"}</td>
+        <td><span class="etiqueta ${u.ativo?"et-verde":"et-cinza"}">${u.ativo?"Ativo":"Inativo"}</span></td>
+        <td style="white-space:nowrap"><button class="btn-sec btn-mini" onclick="abrirGestaoUser(${u.id})">Perfil/áreas</button><button class="btn-sec btn-mini" onclick="redefinirSenhaUser(${u.id})">Redefinir senha</button>${u.id!==sessao.id?`<button class="btn-sec btn-mini" onclick="alternarUser(${u.id},${u.ativo?0:1})">${u.ativo?"Desativar":"Reativar"}</button>`:' <span class="etiqueta et-azul">Sessão atual</span>'}</td></tr>`).join("")+`</tbody></table>`;
+    const logins=await api("/api/logins");
+    const infoP=aplicarPaginacao("logins",logins);
+    const barP=barraPaginacao("logins",infoP);
+    document.getElementById("listaLogins").innerHTML=
+      barP+`<table><thead><tr><th>Data/hora</th><th>Login</th><th>Perfil</th><th>Resultado</th><th>IP</th></tr></thead><tbody>`+
+      infoP.slice.map(l=>`<tr><td>${dataHoraPT(l.data)}</td><td>${esc(l.login)}</td><td>${esc(PERFIS[l.perfil]||l.perfil)||"—"}</td>
+        <td><span class="etiqueta ${l.sucesso?"et-verde":"et-vermelho"}">${l.sucesso?"Sucesso":"Falhou"}</span></td>
+        <td>${esc(l.ip)}</td></tr>`).join("")+`</tbody></table>`+barP;
+    const auditoria=await api("/api/auditoria");
+    const infoA=aplicarPaginacao("auditoria",auditoria),barA=barraPaginacao("auditoria",infoA);
+    document.getElementById("listaAuditoria").innerHTML=barA+`<table><thead><tr><th>Data/hora</th><th>Utilizador</th><th>Ação</th><th>Entidade</th><th>Área</th><th>Detalhe</th><th>IP</th></tr></thead><tbody>`+
+      infoA.slice.map(a=>`<tr><td>${dataHoraPT(a.data)}</td><td>${esc(a.login)}<br><span style="font-size:12px;color:var(--cinza)">${esc(PERFIS[a.perfil]||a.perfil)}</span></td><td>${esc(a.acao)}</td><td>${esc(a.entidade)}${a.entidadeUuid?`<br><span style="font-size:11px;color:var(--cinza)">${esc(a.entidadeUuid)}</span>`:""}</td><td>${esc(a.area)||"—"}</td><td>${esc(a.detalhe)||"—"}</td><td>${esc(a.ip)}</td></tr>`).join("")+`</tbody></table>`+barA;
+  }catch(e){
+    document.getElementById("listaUsers").innerHTML='<div class="vazio">A gestão de utilizadores e a auditoria exigem ligação ao servidor.</div>';
+    document.getElementById("listaLogins").innerHTML="";
+    document.getElementById("listaAuditoria").innerHTML="";
+  }
+}
+function abrirGestaoUser(id){
+  const u=usersAtuais.find(x=>x.id===id);if(!u)return;
+  const opPerf=Object.entries(PERFIS).map(([v,n])=>`<option value="${v}"${v===u.perfil?" selected":""}>${n}</option>`).join("");
+  const opAreas=['*',...AREAS].map(a=>`<option value="${a}"${(u.areas||[]).includes(a)?" selected":""}>${a==="*"?"Todas as áreas (transição)":a}</option>`).join("");
+  document.getElementById("modalConteudo").innerHTML=`<h3>Perfil e áreas — ${esc(u.nome)}</h3><label>Perfil</label><select id="ePerfil" onchange="atualizarCamposEdicaoPerfil()">${opPerf}</select><label>Áreas atribuídas</label><select id="eAreas" multiple size="8">${opAreas}</select><p style="font-size:12.5px;color:var(--cinza)">As áreas são aplicadas ao perfil Responsável. O perfil QSSA fica automaticamente associado à área QSSA. A alteração encerra as sessões abertas do utilizador.</p><div class="acoesForm"><button class="btn" onclick="guardarGestaoUser(${u.id})">Guardar</button><button class="btn-sec" onclick="fecharModal()">Cancelar</button></div>`;
+  document.getElementById("modalDet").classList.add("aberto");atualizarCamposEdicaoPerfil();
+}
+function atualizarCamposEdicaoPerfil(){
+  const p=document.getElementById("ePerfil")?.value,a=document.getElementById("eAreas");if(!a)return;
+  a.disabled=!["responsavel","qssa"].includes(p);
+  if(p==="qssa")for(const o of a.options)o.selected=o.value==="QSSA";
+  if(!["responsavel","qssa"].includes(p))for(const o of a.options)o.selected=false;
+}
+async function guardarGestaoUser(id){
+  const perfil=document.getElementById("ePerfil").value,areas=[...document.getElementById("eAreas").selectedOptions].map(o=>o.value);
+  try{await api("/api/usuarios/"+id,{perfil,areas},"PUT");fecharModal();flash("Perfil e áreas atualizados.");renderUsers();}catch(e){flash(e.message);}
+}
+async function redefinirSenhaUser(id){
+  const u=usersAtuais.find(x=>x.id===id);if(!u)return;
+  const senha=prompt("Defina uma senha temporária com pelo menos 10 caracteres para "+u.nome+". O utilizador terá de a alterar no próximo acesso.");
+  if(senha===null)return;
+  try{await api("/api/usuarios/"+id+"/redefinir-senha",{senha});flash("Senha temporária definida e sessões encerradas.");renderUsers();}catch(e){flash(e.message);}
+}
+async function alternarUser(id,ativo){
+  try{await api("/api/usuarios/"+id+"/estado",{ativo});flash(ativo?"Utilizador reativado.":"Utilizador desativado.");renderUsers();}
+  catch(e){flash(e.message);}
+}
+
+
+/* ================= LEILÃO DE MATERIAIS ================= */
+function chaveParticipante(){return "participanteLeilao_"+(sessao?.login||"anonimo").toLowerCase();}
+function participante(){ try{return JSON.parse(localStorage.getItem(chaveParticipante())||"null");}catch(e){return null;} }
+function guardarParticipante(p){ localStorage.setItem(chaveParticipante(),JSON.stringify(p)); }
+function fmtKz(n){ return (Number(n)||0).toLocaleString("pt-PT")+" Kz"; }
+function fmtRestante(ms){
+  if(ms<=0)return "Tempo esgotado";
+  const s=Math.floor(ms/1000);
+  const d=Math.floor(s/86400), h=Math.floor(s%86400/3600), m=Math.floor(s%3600/60), sec=s%60;
+  const p2=x=>String(x).padStart(2,"0");
+  return (d>0?d+"d ":"")+p2(h)+":"+p2(m)+":"+p2(sec);
+}
+async function lancesDe(u){ return (await dbAll("lances")).filter(l=>!l.apagado&&l.materialUuid===u); }
+async function decisaoDe(u){ return (await dbAll("leiloes")).find(x=>x.materialUuid===u&&!x.apagado)||null; }
+function faseLeilao(lances,decisao){
+  if(decisao){ if(decisao.estado==="aprovado")return {fase:"aprovado"}; if(decisao.estado==="recusado")return {fase:"recusado"}; }
+  if(!lances.length)return {fase:"sem-lances"};
+  const inicio=lances.reduce((mi,l)=>(l.data<mi?l.data:mi),lances[0].data);
+  const fim=new Date(new Date(inicio).getTime()+DURACAO_LEILAO_H*3600e3).toISOString();
+  return { fase: agora()>=fim?"encerrado":"aberto", inicio, fim };
+}
+function ordenarLances(lances){
+  return lances.slice().sort((a,b)=>{
+    const av=a.tipoPedido==="abate"?1:0, bv=b.tipoPedido==="abate"?1:0;
+    if(av!==bv)return bv-av;
+    if(av) return ((Number(b.valor)||0)-(Number(a.valor)||0)) || a.data.localeCompare(b.data);
+    return a.data.localeCompare(b.data);
+  });
+}
+function vencedorProvavel(lances){ const o=ordenarLances(lances); return o[0]||null; }
+
+/* ---- Registo de participante ---- */
+function formParticipanteHTML(){
+  const p=participante()||{};
+  return `<h3>Registo de participante</h3>
+    <p style="font-size:13.5px;color:var(--cinza);margin-bottom:8px">Para participar no leilão, registe os seus dados. Ficam guardados neste dispositivo e são usados nos seus lances.</p>
+    <div class="formGrelha">
+      <div><label>Nome completo *</label><input id="pNome" value="${esc(sessao.nome||"")}" disabled></div>
+      <div><label>Área *</label><select id="pArea">${AREAS.map(a=>`<option${p.area===a?" selected":""}>${a}</option>`).join("")}</select></div>
+      <div><label>Função *</label><input id="pFuncao" value="${esc(p.funcao||"")}" placeholder="ex.: Técnico de QSSA"></div>
+    </div>
+    <div class="acoesForm" style="margin-top:8px"><button class="btn" onclick="salvarParticipante()">Guardar registo</button></div>`;
+}
+function renderParticipantePainel(){
+  const el=document.getElementById("painelParticipante");
+  if(pode.supervisionar()){ el.style.display="none"; return; }
+  el.style.display="block";
+  if(!pode.licitar()){
+    el.innerHTML='<p style="font-size:14px;color:var(--cinza);margin:0">O seu perfil permite consultar o leilão e acompanhar os lances. A submissão de lances está reservada aos perfis de participação.</p>';
+    return;
+  }
+  const p=participante();
+  el.innerHTML = p
+    ? `<h3>Participante registado</h3><p style="font-size:14px;margin:4px 0">${esc(p.nome)} · ${esc(p.area)} · ${esc(p.funcao)}</p><div class="acoesForm" style="margin-top:6px"><button class="btn-sec btn-mini" onclick="editarParticipante()">Alterar dados</button></div>`
+    : formParticipanteHTML();
+}
+function editarParticipante(){ document.getElementById("painelParticipante").innerHTML=formParticipanteHTML(); }
+function salvarParticipante(){
+  const nome=sessao.nome;
+  const area=document.getElementById("pArea").value;
+  const funcao=(document.getElementById("pFuncao").value||"").trim();
+  if(!nome||!funcao){flash("Indique o nome completo e a função.");return;}
+  guardarParticipante({nome,area,funcao});
+  flash("Registo de participante guardado."); renderLeilao();
+}
+
+/* ---- Lista de materiais em leilão ---- */
+async function renderLeilao(){
+  const se=document.getElementById("fLeilaoEstado");
+  if(se&&se.options.length<=1) se.innerHTML='<option value="">Todos os estados elegíveis</option>'+ESTADOS_LEILAO.map(e=>`<option>${e}</option>`).join("");
+  renderParticipantePainel();
+  const av=document.getElementById("avisoSupervisor");
+  av.innerHTML = pode.supervisionar()
+    ? '<div class="painel" style="border-left:4px solid var(--verde)"><b>Modo Supervisor.</b> Pode ver todos os lances, aprovar de imediato (parando o cronómetro) ou recusar cada pedido. Cada aprovação gera a proposta para envio.</div>'
+    : "";
+  const mats=(await vivos()).filter(m=>ESTADOS_LEILAO.includes(m.estado));
+  const todosLances=(await dbAll("lances")).filter(l=>!l.apagado);
+  const todasDec=(await dbAll("leiloes")).filter(x=>!x.apagado);
+  const porMatL={}, porMatD={};
+  todosLances.forEach(l=>{(porMatL[l.materialUuid]=porMatL[l.materialUuid]||[]).push(l);});
+  todasDec.forEach(d=>{porMatD[d.materialUuid]=d;});
+  const q=(document.getElementById("fLeilaoPesq").value||"").toLowerCase();
+  const fe=document.getElementById("fLeilaoEstado").value;
+  const ff=document.getElementById("fLeilaoFase").value;
+  const cards=[];
+  for(const m of mats){
+    const ls=porMatL[m.uuid]||[], dec=porMatD[m.uuid]||null;
+    const f=faseLeilao(ls,dec);
+    if(q&&![m.nome,m.codigo,m.categoria,m.marca].join(" ").toLowerCase().includes(q))continue;
+    if(fe&&m.estado!==fe)continue;
+    if(ff&&f.fase!==ff)continue;
+    cards.push(cardLeilaoHTML(m,ls,dec,f));
+  }
+  const infoP=aplicarPaginacao("leilao",cards,[q,fe,ff].join("|"));
+  const barP=barraPaginacao("leilao",infoP);
+  document.getElementById("listaLeilao").innerHTML = cards.length
+    ? barP+`<div class="gridLeilao">${infoP.slice.join("")}</div>`+barP
+    : '<div class="vazio">Nenhum material elegível com os filtros atuais. Estados elegíveis: '+ESTADOS_LEILAO.join(", ")+'.</div>';
+  await renderPropostasPainel();
+  atualizarCrachaNotif();
+}
+function cardLeilaoHTML(m,ls,dec,f){
+  const venc=vencedorProvavel(ls);
+  let crono="";
+  if(f.fase==="aberto"){
+    const restante=new Date(f.fim)-new Date(), urgente=restante<3*3600e3;
+    crono=`<div class="cronoBox ${urgente?"urgente":""}"><div class="rotC">Termina em</div><div class="cronometro" data-fim="${f.fim}" data-fase="aberto">${esc(fmtRestante(restante))}</div></div>`;
+  }else if(f.fase==="sem-lances"){
+    crono=`<div class="cronoBox"><div class="rotC">Cronómetro</div><div class="cronometro crono-fim" style="color:var(--cinza)">Inicia no 1.º lance (${DURACAO_LEILAO_H}h)</div></div>`;
+  }else if(f.fase==="encerrado"){
+    crono=`<div class="cronoBox urgente"><div class="rotC">Estado</div><div class="cronometro crono-fim">Tempo esgotado — aguarda decisão</div></div>`;
+  }else if(f.fase==="aprovado"){
+    crono=`<div class="cronoBox" style="background:var(--verde-claro)"><div class="rotC">Estado</div><div class="cronometro crono-fim" style="color:var(--verde)">Aprovado pelo Supervisor</div></div>`;
+  }else if(f.fase==="recusado"){
+    crono=`<div class="cronoBox"><div class="rotC">Estado</div><div class="cronometro crono-fim" style="color:var(--vermelho)">Pedido recusado</div></div>`;
+  }
+  const topo = venc
+    ? `<div class="lanceTopo"><span>${venc.tipoPedido==="abate"?"Lance mais alto":"Pedido de atribuição"}</span>${venc.tipoPedido==="abate"?`<b>${esc(fmtKz(venc.valor))}</b>`:'<span class="chipTipo chip-atrib">sem custo</span>'}</div><div class="metaL">${ls.length} pedido(s) · maior por ${esc((venc.licitanteNome||"—").split(" ")[0])}</div>`
+    : `<div class="metaL">Ainda sem lances. Seja o primeiro a propor.</div>`;
+  const img = m.foto
+    ? `<img class="imgL" src="${esc(m.foto)}" onerror="this.style.display='none'" onclick="abrirImagem('${m.uuid}')">`
+    : `<div class="semImgL">Sem imagem</div>`;
+  const acoes=[];
+  if(pode.licitar()&&(f.fase==="aberto"||f.fase==="sem-lances"))acoes.push(`<button class="btn btn-mini" onclick="fazerLance('${m.uuid}')">Fazer lance</button>`);
+  acoes.push(`<button class="btn-sec btn-mini" onclick="verLancesMaterial('${m.uuid}')">Ver lances (${ls.length})</button>`);
+  if(pode.supervisionar()&&ls.length&&f.fase!=="aprovado"&&f.fase!=="recusado")acoes.push(`<button class="btn-verde btn-mini" onclick="verLancesMaterial('${m.uuid}')">Decidir</button>`);
+  if(f.fase==="aprovado")acoes.push(`<button class="btn-verde btn-mini" onclick="abrirProposta('${m.uuid}')">Ver proposta</button>`);
+  return `<div class="cardLeilao">${img}<div class="corpoL">
+    <div class="nmL">${esc(m.nome)}</div>
+    <div class="metaL"><b>${esc(m.codigo)||"—"}</b> · <span class="etiqueta ${COR_ESTADO[m.estado]||"et-cinza"}">${esc(m.estado)}</span></div>
+    <div class="metaL">Preço de avaliação: ${m.valor!=null&&m.valor!==""?esc(fmtKz(m.valor)):"—"} · Qtd: ${esc(m.qtd)} ${esc(m.unidade||"")}</div>
+    ${crono}${topo}
+    <div class="acoesL">${acoes.join("")}</div>
+  </div></div>`;
+}
+
+/* ---- Fazer lance ---- */
+async function fazerLance(u){
+  if(!pode.licitar()){flash("O seu perfil não permite submeter lances.");return;}
+  const m=await dbGet("materiais",u);
+  const ls=await lancesDe(u), dec=await decisaoDe(u), f=faseLeilao(ls,dec);
+  if(f.fase==="aprovado"||f.fase==="recusado"){flash("Este leilão já foi decidido pelo Supervisor.");return;}
+  if(f.fase==="encerrado"){flash("O tempo deste leilão terminou — aguarda a decisão do Supervisor.");return;}
+  const abateMax=ls.filter(l=>l.tipoPedido==="abate").sort((a,b)=>(Number(b.valor)||0)-(Number(a.valor)||0))[0];
+  const p=participante();
+  document.getElementById("modalConteudo").innerHTML=
+   `<h3>Fazer lance — ${esc(m.codigo)||esc(m.nome)}</h3>
+    <p style="font-size:14px;color:var(--cinza)">${esc(m.nome)} · ${esc(m.estado)} · Preço de avaliação: ${m.valor!=null&&m.valor!==""?esc(fmtKz(m.valor)):"—"}${abateMax?` · Lance atual mais alto: <b>${esc(fmtKz(abateMax.valor))}</b>`:""}</p>
+    ${p?"":`<div class="wizard"><h4>Registo de participante (obrigatório)</h4><div class="formGrelha"><div><label>Nome completo *</label><input id="pNome" value="${esc(sessao.nome||"")}" disabled></div><div><label>Área *</label><select id="pArea">${AREAS.map(a=>`<option>${a}</option>`).join("")}</select></div><div><label>Função *</label><input id="pFuncao" placeholder="ex.: Técnico de QSSA"></div></div></div>`}
+    <label>Tipo de pedido *</label>
+    <select id="lTipo" onchange="alternarTipoLance()">
+      <option value="abate">Abate (compra — apresento um valor)</option>
+      <option value="atribuicao">Atribuição (oferta sem custo)</option>
+    </select>
+    <div id="campoValor"><label>Valor proposto (Kz) *</label><input id="lValor" type="number" min="0" step="0.01" placeholder="ex.: 25000"></div>
+    <div id="campoJustif" style="display:none"><label>Justificação do pedido de atribuição *</label><textarea id="lJustif" rows="2" placeholder="Motivo do pedido de atribuição sem custo"></textarea></div>
+    <div class="acoesForm">
+      <button class="btn" onclick="confirmarLance('${u}')">Submeter lance</button>
+      <button class="btn-sec" onclick="fecharModal()">Cancelar</button>
+    </div>`;
+  document.getElementById("modalDet").classList.add("aberto");
+}
+function alternarTipoLance(){
+  const t=document.getElementById("lTipo").value;
+  document.getElementById("campoValor").style.display=t==="abate"?"block":"none";
+  document.getElementById("campoJustif").style.display=t==="atribuicao"?"block":"none";
+}
+async function confirmarLance(u){
+  let p=participante();
+  if(!p){
+    const nome=sessao.nome;
+    const area=(document.getElementById("pArea")||{}).value||AREAS[0];
+    const funcao=((document.getElementById("pFuncao")||{}).value||"").trim();
+    if(!nome||!funcao){flash("Registe o seu nome completo e função para participar.");return;}
+    p={nome,area,funcao}; guardarParticipante(p);
+  }
+  const tipo=document.getElementById("lTipo").value;
+  let valor=null, justif="";
+  if(tipo==="abate"){
+    valor=Number(document.getElementById("lValor").value);
+    if(!valor||valor<=0){flash("Indique um valor de compra válido (Kz).");return;}
+  }else{
+    justif=(document.getElementById("lJustif").value||"").trim();
+    if(!justif){flash("Indique a justificação do pedido de atribuição.");return;}
+  }
+  const m=await dbGet("materiais",u);
+  const jaHavia=(await lancesDe(u)).length>0;
+  const lance={uuid:novoUuid(),materialUuid:u,codigo:m.codigo,nomeMaterial:m.nome,
+    tipoPedido:tipo,valor,justificacao:justif,
+    licitanteNome:p.nome,licitanteArea:p.area,licitanteFuncao:p.funcao,licitanteLogin:sessao.login,
+    data:agora(),atualizadoEm:agora(),apagado:0};
+  await guardarEEnviar("lances",lance);
+  if(!jaHavia) await criarNotificacao(`Novo leilão iniciado: ${m.codigo||m.nome} — primeiro pedido por ${p.nome}.`,"v-leilao",["supervisor"]);
+  fecharModal(); flash("Lance submetido. O cronómetro de "+DURACAO_LEILAO_H+"h conta a partir do primeiro lance."); renderLeilao();
+}
+
+/* ---- Ver lances / decisão do Supervisor ---- */
+async function verLancesMaterial(u){
+  const m=await dbGet("materiais",u);
+  const raw=await lancesDe(u); const ls=ordenarLances(raw);
+  const dec=await decisaoDe(u); const f=faseLeilao(raw,dec);
+  const sup=pode.supervisionar();
+  const decidivel = sup && f.fase!=="aprovado" && f.fase!=="recusado";
+  const venc=vencedorProvavel(ls);
+  const colDec = sup ? "<th>Decisão</th>" : "";
+  const linhas = ls.length ? ls.map((l,i)=>{
+    const ehVenc = venc && l.uuid===venc.uuid && f.fase!=="recusado";
+    const cel = decidivel
+      ? `<td><button class="btn-verde btn-mini" onclick="aprovarLance('${u}','${l.uuid}')">Aprovar este</button></td>`
+      : (sup ? `<td>${dec&&dec.lanceVencedorUuid===l.uuid?'<span class="etiqueta et-verde">Vencedor</span>':""}</td>` : "");
+    return `<tr class="${ehVenc?"venc":""}"><td>${i+1}</td>
+      <td>${esc(l.licitanteNome)}<br><span style="font-size:12px;color:var(--cinza)">${esc(l.licitanteArea)} · ${esc(l.licitanteFuncao)}</span></td>
+      <td><span class="chipTipo ${l.tipoPedido==="abate"?"chip-abate":"chip-atrib"}">${l.tipoPedido==="abate"?"Abate":"Atribuição"}</span></td>
+      <td style="white-space:nowrap;font-weight:700">${l.tipoPedido==="abate"?esc(fmtKz(l.valor)):"sem custo"}</td>
+      <td style="max-width:180px">${esc(l.justificacao)||"—"}</td>
+      <td style="white-space:nowrap">${dataHoraPT(l.data)}</td>${cel}</tr>`;
+  }).join("") : `<tr><td colspan="${sup?7:6}" style="text-align:center;color:var(--cinza)">Ainda sem lances.</td></tr>`;
+  let info="";
+  if(f.fase==="aberto")info=`<span class="etiqueta et-azul">A decorrer — termina ${dataHoraPT(f.fim)}</span>`;
+  else if(f.fase==="encerrado")info=`<span class="etiqueta et-vermelho">Tempo esgotado — aguarda decisão do Supervisor</span>`;
+  else if(f.fase==="aprovado")info=`<span class="etiqueta et-verde">Aprovado por ${esc(dec.decididoPor)} em ${dataHoraPT(dec.decididoEm)}</span>`;
+  else if(f.fase==="recusado")info=`<span class="etiqueta et-vermelho">Recusado por ${esc(dec.decididoPor)} em ${dataHoraPT(dec.decididoEm)}</span>`;
+  else info=`<span class="etiqueta et-cinza">Sem lances — o cronómetro inicia no 1.º lance</span>`;
+  document.getElementById("modalConteudo").innerHTML=
+   `<h3>Lances — ${esc(m.codigo)||esc(m.nome)}</h3>
+    <p style="font-size:14px;color:var(--cinza)">${esc(m.nome)} · ${esc(m.estado)} · Preço de avaliação: ${m.valor!=null&&m.valor!==""?esc(fmtKz(m.valor)):"—"}</p>
+    <p style="margin:6px 0">${info}</p>
+    <div class="tabelaScroll"><table class="tabLances"><thead><tr><th>#</th><th>Participante</th><th>Tipo</th><th>Valor</th><th>Justificação</th><th>Data</th>${colDec}</tr></thead><tbody>${linhas}</tbody></table></div>
+    ${sup?blocoSupervisor(u,f,ls):""}
+    <div class="acoesForm">
+      ${f.fase==="aprovado"?`<button class="btn-verde" onclick="abrirProposta('${u}')">Ver / copiar proposta</button>`:""}
+      <button class="btn-sec" onclick="fecharModal()">Fechar</button>
+    </div>`;
+  document.getElementById("modalDet").classList.add("aberto");
+}
+function blocoSupervisor(u,f,ls){
+  if(f.fase==="aprovado"||f.fase==="recusado"){
+    return `<div class="wizard"><h4>Decisão registada</h4><p style="font-size:13.5px;margin-bottom:6px">Pode reabrir o leilão se precisar de rever a decisão.</p><button class="btn-sec btn-mini" onclick="reabrirLeilao('${u}')">Reabrir leilão</button></div>`;
+  }
+  const venc=vencedorProvavel(ls);
+  return `<div class="wizard"><h4>Decisão do Supervisor</h4>
+    <p style="font-size:13.5px;color:var(--cinza);margin-bottom:6px">Pode aprovar o lance mais alto, aprovar qualquer lance individual (botão na tabela) ou recusar o leilão. A aprovação para o cronómetro de imediato.</p>
+    <div class="acoesForm" style="margin-top:0">
+      ${venc?`<button class="btn-verde" onclick="aprovarLance('${u}','${venc.uuid}')">Aprovar ${venc.tipoPedido==="abate"?"lance mais alto ("+esc(fmtKz(venc.valor))+")":"pedido de atribuição"}</button>`:""}
+      <button class="btn-vermelho" onclick="recusarLeilao('${u}')">Recusar leilão</button>
+    </div></div>`;
+}
+async function aprovarLance(u,lanceUuid){
+  if(!pode.supervisionar()){flash("Apenas o Supervisor pode aprovar.");return;}
+  const m=await dbGet("materiais",u);
+  const l=(await lancesDe(u)).find(x=>x.uuid===lanceUuid);
+  if(!l){flash("Lance não encontrado.");return;}
+  const dec={uuid:u,materialUuid:u,codigo:m.codigo,nomeMaterial:m.nome,area:m.area,
+    estado:"aprovado",tipoDecisao:l.tipoPedido,lanceVencedorUuid:l.uuid,
+    vencedorNome:l.licitanteNome,vencedorArea:l.licitanteArea,vencedorFuncao:l.licitanteFuncao,
+    valorFinal:l.tipoPedido==="abate"?(Number(l.valor)||0):null,
+    obs:"",decididoPor:sessao.nome,decididoEm:agora(),atualizadoEm:agora(),apagado:0};
+  await guardarEEnviar("leiloes",dec);
+  await registarMovimento(m,"Leilão — aprovado",(l.tipoPedido==="abate"?"Abate por "+fmtKz(l.valor):"Atribuição sem custo")+" a "+l.licitanteNome+" (aprovado por "+sessao.nome+")");
+  flash("Pedido aprovado. A gerar proposta…");
+  abrirProposta(u); renderLeilao();
+}
+async function recusarLeilao(u){
+  if(!pode.supervisionar())return;
+  if(!confirm("Recusar todos os pedidos deste material?"))return;
+  const m=await dbGet("materiais",u);
+  const dec={uuid:u,materialUuid:u,codigo:m.codigo,nomeMaterial:m.nome,area:m.area,
+    estado:"recusado",tipoDecisao:null,lanceVencedorUuid:null,vencedorNome:null,vencedorArea:null,vencedorFuncao:null,valorFinal:null,
+    obs:"",decididoPor:sessao.nome,decididoEm:agora(),atualizadoEm:agora(),apagado:0};
+  await guardarEEnviar("leiloes",dec);
+  await registarMovimento(m,"Leilão — recusado","Pedidos recusados por "+sessao.nome);
+  fecharModal(); flash("Leilão recusado."); renderLeilao();
+}
+async function reabrirLeilao(u){
+  if(!pode.supervisionar())return;
+  const dec=await decisaoDe(u);
+  if(dec){dec.apagado=1;dec.atualizadoEm=agora();await guardarEEnviar("leiloes",dec);}
+  fecharModal(); flash("Leilão reaberto."); renderLeilao();
+}
+
+/* ---- Propostas aprovadas (agrupadas por participante) ---- */
+async function renderPropostasPainel(){
+  const el=document.getElementById("painelPropostas");
+  const aprov=(await dbAll("leiloes")).filter(d=>!d.apagado&&d.estado==="aprovado");
+  let visiveis=aprov;
+  if(!pode.supervisionar()){ const p=participante(); visiveis = p ? aprov.filter(d=>d.vencedorNome===p.nome) : []; }
+  if(!visiveis.length){el.style.display="none";return;}
+  const grupos={};
+  visiveis.forEach(d=>{(grupos[d.vencedorNome]=grupos[d.vencedorNome]||[]).push(d);});
+  el.style.display="block";
+  el.innerHTML=`<h3>Propostas aprovadas ${pode.supervisionar()?"(todos os participantes)":"(as suas)"}</h3>`+
+    Object.entries(grupos).map(([nome,ds])=>{
+      const total=ds.reduce((sm,d)=>sm+(Number(d.valorFinal)||0),0);
+      const pr=ds[0];
+      return `<div class="painel" style="box-shadow:none;border:1px solid #E1E7EC;margin-bottom:8px">
+        <b>${esc(nome)}</b> · ${esc(pr.vencedorArea||"")} · ${esc(pr.vencedorFuncao||"")}<br>
+        <span style="font-size:13px;color:var(--cinza)">${ds.length} material(is) aprovado(s) · Total (abate): ${esc(fmtKz(total))}</span>
+        <div class="acoesForm" style="margin-top:6px"><button class="btn-verde btn-mini" onclick="propostaPor('${encodeURIComponent(nome)}')">Gerar / copiar proposta</button></div>
+      </div>`;
+    }).join("");
+}
+async function propostaPor(nomeEnc){
+  const nome=decodeURIComponent(nomeEnc);
+  const d=(await dbAll("leiloes")).find(x=>!x.apagado&&x.estado==="aprovado"&&x.vencedorNome===nome);
+  if(!d){flash("Sem proposta para este participante.");return;}
+  mostrarPropostaParticipante(nome,d.vencedorArea,d.vencedorFuncao);
+}
+async function abrirProposta(u){
+  const dec=await decisaoDe(u);
+  if(!dec||dec.estado!=="aprovado"){flash("Ainda não há decisão aprovada para este material.");return;}
+  mostrarPropostaParticipante(dec.vencedorNome,dec.vencedorArea,dec.vencedorFuncao);
+}
+function textoProposta(p,itens,supervisor){
+  const h=new Date().getHours();
+  const saud = h<12?"Bom dia,":(h<19?"Boa tarde,":"Boa noite,");
+  const abate=itens.filter(i=>i.tipo==="abate"), atrib=itens.filter(i=>i.tipo==="atribuicao");
+  const tipoTxt = (abate.length&&atrib.length)?"abate (compra) e atribuição (oferta sem custo)":(abate.length?"abate (compra)":"atribuição (oferta sem custo)");
+  const linhas=itens.map((i,n)=>{
+    const val = i.tipo==="abate"?("Valor proposto: "+fmtKz(i.valor)):"Atribuição (oferta sem custo)";
+    return `${n+1}. ${i.codigo} — ${i.nome} — Quantidade: ${i.qtd} ${i.unidade||""} — ${val}`;
+  }).join("\n");
+  const total=abate.reduce((sm,i)=>sm+(Number(i.valor)||0),0);
+  const dataExt=new Date().toLocaleDateString("pt-PT",{day:"2-digit",month:"long",year:"numeric"});
+  let t=`${saud} Distinto Supervisor ${supervisor||"responsável"},\n\n`;
+  t+=`No âmbito do processo de alienação de materiais avariados ou obsoletos do armazém do Terminal Oceânico do Namibe, venho apresentar, para a sua apreciação, a minha proposta de ${tipoTxt} dos materiais indicados abaixo.\n\n`;
+  t+=`Participante: ${p.nome}\nÁrea: ${p.area}\nFunção: ${p.funcao}\n\n`;
+  t+=`Materiais solicitados:\n${linhas}\n`;
+  if(abate.length) t+=`\nValor total proposto: ${fmtKz(total)}\n`;
+  t+=`\nPode confirmar a aceitação desta proposta, por favor? Fico ao dispor para qualquer esclarecimento adicional.\n\n`;
+  t+=`Obrigado pela atenção. É um privilégio contar com o seu apoio.\n\nAtenciosamente,\n${p.nome}\n${dataExt}`;
+  return t;
+}
+async function mostrarPropostaParticipante(nome,area,funcao){
+  const decs=(await dbAll("leiloes")).filter(d=>!d.apagado&&d.estado==="aprovado"&&d.vencedorNome===nome);
+  if(!decs.length){flash("Sem pedidos aprovados para este participante.");return;}
+  const itens=[];
+  for(const d of decs){
+    const m=await dbGet("materiais",d.materialUuid);
+    itens.push({codigo:d.codigo||(m&&m.codigo)||"—",nome:d.nomeMaterial||(m&&m.nome)||"",
+      qtd:m?m.qtd:"",unidade:m?m.unidade:"",tipo:d.tipoDecisao,valor:d.valorFinal,foto:m?m.foto:null,uuid:d.materialUuid});
+  }
+  const supervisores=[...new Set(decs.map(d=>d.decididoPor).filter(Boolean))];
+  const supervisor=supervisores.join(" / ")||"responsável";
+  const texto=textoProposta({nome,area,funcao},itens,supervisor);
+  const imgs=itens.filter(i=>i.foto);
+  document.getElementById("modalConteudo").innerHTML=
+   `<h3>Proposta para o Distinto Supervisor ${esc(supervisor)}</h3>
+    <p style="font-size:13.5px;color:var(--cinza)">Participante: ${esc(nome)} · ${esc(area)} · ${esc(funcao)} — ${itens.length} material(is) aprovado(s).</p>
+    <textarea id="txtProposta" class="propostaTxt">${esc(texto)}</textarea>
+    <div class="acoesForm" style="margin-top:8px">
+      <button class="btn" onclick="copiarProposta()">Copiar texto</button>
+      <button class="btn-verde" onclick="enviarWhatsApp()">Enviar por WhatsApp</button>
+      <button class="btn-sec" onclick="enviarEmail()">Enviar por e-mail</button>
+      ${navigator.share?`<button class="btn-sec" onclick="partilharProposta()">Partilhar (texto + imagens)</button>`:""}
+    </div>
+    ${imgs.length?`<h3 style="font-size:14px;margin-top:14px">Imagens dos materiais</h3>
+      <p style="font-size:12.5px;color:var(--cinza)">Clique numa imagem para ampliar/guardar. Use “Copiar imagem” ou “Partilhar” para anexar no WhatsApp/e-mail.</p>
+      <div class="miniFotos">${imgs.map(i=>`<div style="text-align:center"><img class="miniImgProp" src="${esc(i.foto)}" onclick="abrirImagem('${i.uuid}')" onerror="this.style.display='none'"><button class="btn-sec btn-mini" style="margin-top:3px" onclick="copiarImagem('${esc(i.foto)}')">Copiar imagem</button></div>`).join("")}</div>`:""}`;
+  window._propostaAtual={texto,imgs:imgs.map(i=>i.foto),nome};
+  document.getElementById("modalDet").classList.add("aberto");
+}
+
+/* ---- Cópia e partilha ---- */
+async function copiarTexto(txt){
+  try{ if(navigator.clipboard&&window.isSecureContext){ await navigator.clipboard.writeText(txt); return true; } }catch(e){}
+  try{ const ta=document.createElement("textarea"); ta.value=txt; ta.style.position="fixed"; ta.style.opacity="0"; document.body.appendChild(ta); ta.focus(); ta.select(); const ok=document.execCommand("copy"); document.body.removeChild(ta); return ok; }catch(e){ return false; }
+}
+async function copiarProposta(){
+  const t=document.getElementById("txtProposta").value;
+  flash(await copiarTexto(t)?"Texto da proposta copiado.":"Não foi possível copiar automaticamente — selecione o texto e copie manualmente.");
+}
+function enviarWhatsApp(){ window.open("https://wa.me/?text="+encodeURIComponent(document.getElementById("txtProposta").value),"_blank"); }
+function enviarEmail(){
+  const t=document.getElementById("txtProposta").value;
+  location.href="mailto:?subject="+encodeURIComponent("Proposta de abate/atribuição de materiais — Armazém TON")+"&body="+encodeURIComponent(t);
+}
+async function copiarImagem(src){
+  try{
+    if(navigator.clipboard&&window.ClipboardItem&&window.isSecureContext){
+      const r=await fetch(src); const b=await r.blob();
+      await navigator.clipboard.write([new ClipboardItem({[b.type]:b})]);
+      flash("Imagem copiada — cole no WhatsApp/e-mail."); return;
+    }
+  }catch(e){}
+  window.open(src,"_blank"); flash("Cópia direta de imagem indisponível neste acesso — abri a imagem para guardar/anexar.");
+}
+async function partilharProposta(){
+  const dados=window._propostaAtual||{};
+  const t=(document.getElementById("txtProposta")||{}).value||dados.texto||"";
+  try{
+    const ficheiros=[];
+    for(const src of (dados.imgs||[])){
+      try{ const r=await fetch(src); const b=await r.blob(); const ext=(b.type.split("/")[1]||"jpg"); ficheiros.push(new File([b],(dados.nome||"material").replace(/\s+/g,"_")+"_"+(ficheiros.length+1)+"."+ext,{type:b.type})); }catch(e){}
+    }
+    if(navigator.canShare&&ficheiros.length&&navigator.canShare({files:ficheiros})) await navigator.share({title:"Proposta — Armazém TON",text:t,files:ficheiros});
+    else await navigator.share({title:"Proposta — Armazém TON",text:t});
+  }catch(e){ /* cancelado pelo utilizador */ }
+}
+
+/* ---- Cronómetros ---- */
+let intervaloLeilao=null;
+function iniciarCronometros(){ clearInterval(intervaloLeilao); intervaloLeilao=setInterval(tickCronometros,1000); tickCronometros(); }
+function pararCronometros(){ if(intervaloLeilao){clearInterval(intervaloLeilao);intervaloLeilao=null;} }
+function tickCronometros(){
+  let refrescar=false;
+  document.querySelectorAll(".cronometro[data-fim]").forEach(el=>{
+    const restante=new Date(el.dataset.fim)-new Date();
+    const box=el.closest(".cronoBox");
+    if(restante<=0){ if(el.dataset.fase==="aberto"){refrescar=true; el.dataset.fase="fim";} el.textContent="Tempo esgotado"; el.classList.add("crono-fim"); if(box)box.classList.add("urgente"); }
+    else{ el.textContent=fmtRestante(restante); if(restante<3*3600e3&&box)box.classList.add("urgente"); }
+  });
+  const vista=document.getElementById("v-leilao");
+  if(refrescar&&vista&&vista.classList.contains("ativa"))renderLeilao();
+}
+
+
+/* ================= MOVIMENTOS DE STOCK (entradas/saídas/kardex) ================= */
+const TIPOS_MOV=["Entrada","Saída","Devolução","Ajuste","Transferência"];
+let fotoMovTemp=null;
+function chipMov(t){return t==="Entrada"?"mv-entrada":t==="Saída"?"mv-saida":t==="Devolução"?"mv-devolucao":t==="Ajuste"?"mv-ajuste":"mv-transferencia";}
+function calcSaldoLocal(antes,tipo,q){
+  if(tipo==="Entrada"||tipo==="Devolução")return antes+q;
+  if(tipo==="Saída")return Math.max(0,antes-q);
+  if(tipo==="Ajuste")return Math.max(0,q);
+  return antes; // Transferência
+}
+
+async function renderMovstock(){
+  const ft=document.getElementById("fMovTipo"); if(ft&&ft.options.length<=1)ft.innerHTML='<option value="">Todos os tipos</option>'+TIPOS_MOV.map(t=>`<option>${t}</option>`).join("");
+  const fa=document.getElementById("fMovArea"); if(fa&&!fa.options.length)fa.innerHTML='<option value="">Todas as áreas</option>'+AREAS.map(a=>`<option>${a}</option>`).join("");
+  const btn=document.getElementById("btnNovoMov"); if(btn)btn.style.display=pode.moverStock()?"inline-block":"none";
+  const movs=(await dbAll("movstock")).filter(x=>!x.apagado).sort((a,b)=>String(b.data||"").localeCompare(String(a.data||"")));
+  const q=(document.getElementById("fMovPesq").value||"").toLowerCase();
+  const ft2=document.getElementById("fMovTipo").value, fa2=document.getElementById("fMovArea").value;
+  const de=document.getElementById("fMovDe").value, ate=document.getElementById("fMovAte").value;
+  const estornados=new Set(movs.filter(x=>x.estornoDe).map(x=>x.estornoDe));
+  const lista=movs.filter(x=>{
+    if(q&&![x.nome,x.codigo,x.documento,x.motivo,x.usuario].join(" ").toLowerCase().includes(q))return false;
+    if(ft2&&x.tipo!==ft2)return false;
+    if(fa2&&x.area!==fa2)return false;
+    const d=String(x.data||"").slice(0,10);
+    if(de&&d<de)return false; if(ate&&d>ate)return false;
+    return true;
+  });
+  const sup=["admin","responsavel"].includes(sessao.perfil);
+  const alvo=document.getElementById("listaMovstock");
+  if(!lista.length){alvo.innerHTML='<div class="vazio">Sem movimentos de stock'+((q||ft2||fa2||de||ate)?" com os filtros atuais.":". Use <b>+ Registar movimento</b> ou os botões Entrada/Saída na lista de Materiais.")+'</div>';return;}
+  const infoP=aplicarPaginacao("movstock",lista,[q,ft2,fa2,de,ate].join("|"));
+  const barP=barraPaginacao("movstock",infoP);
+  alvo.innerHTML=barP+`<table><thead><tr><th>Data</th><th>Código</th><th>Material</th><th>Tipo</th><th style="text-align:right">Qtd</th><th style="text-align:right">Saldo</th><th>Documento</th><th>Utilizador</th>${sup?"<th></th>":""}</tr></thead><tbody>`+
+    infoP.slice.map(x=>{
+      const delta=(x.tipo==="Entrada"||x.tipo==="Devolução")?`<span class="movDelta pos">+${x.qtd}</span>`:x.tipo==="Saída"?`<span class="movDelta neg">−${x.qtd}</span>`:x.tipo==="Ajuste"?`→ ${x.qtdDepois}`:"—";
+      const podeEst=pode.aprovar(x.area)&&!x.estornoDe&&x.tipo!=="Transferência"&&!estornados.has(x.uuid);
+      return `<tr>
+        <td style="white-space:nowrap">${dataHoraPT(x.data)}</td>
+        <td><b>${esc(x.codigo)||"—"}</b></td>
+        <td>${esc(x.nome)}${x.estornoDe?' <span class="etiqueta et-cinza">estorno</span>':""}${estornados.has(x.uuid)?' <span class="etiqueta et-cinza">estornado</span>':""}${x.motivo?`<br><span style="font-size:12px;color:var(--cinza)">${esc(x.motivo)}</span>`:""}</td>
+        <td><span class="chipMov ${chipMov(x.tipo)}">${esc(x.tipo)}</span></td>
+        <td style="text-align:right;white-space:nowrap">${delta}</td>
+        <td style="text-align:right;white-space:nowrap"><b>${x.qtdDepois!=null?x.qtdDepois:"—"}</b></td>
+        <td>${esc(x.documento)||"—"}</td>
+        <td>${esc(x.usuario)||"—"}</td>
+        ${sup?`<td style="white-space:nowrap"><button class="btn-sec btn-mini" onclick="fichaKardex('${x.materialUuid}')">Ficha</button>${podeEst?`<button class="btn-sec btn-mini" onclick="estornarMov('${x.uuid}')">Estornar</button>`:""}</td>`:""}
+      </tr>`;
+    }).join("")+`</tbody></table>`+barP;
+}
+
+async function selMaterialMov(){
+  const fixo=document.getElementById("movMaterialFixo");
+  const u = fixo? fixo.value : ((document.getElementById("movMaterial")||{}).value||"");
+  return u? await dbGet("materiais",u) : null;
+}
+async function abrirMovStock(presetUuid,presetTipo){
+  fotoMovTemp=null;
+  const mats=(await vivos()).filter(m=>pode.moverStock(m.area)).sort((a,b)=>String(a.codigo||"~").localeCompare(String(b.codigo||"~")));
+  if(!mats.length){flash("O seu perfil não permite registar movimentos de stock nas áreas disponíveis.");return;}
+  const fixo = presetUuid? mats.find(m=>m.uuid===presetUuid) : null;
+  if(presetUuid&&!fixo){flash("Sem permissão para movimentar este material.");return;}
+  document.getElementById("modalConteudo").innerHTML=`
+    <h3>Registar movimento de stock</h3>
+    ${fixo?`<input type="hidden" id="movMaterialFixo" value="${fixo.uuid}"><p style="font-size:14px;color:var(--cinza)"><b>${esc(fixo.codigo)||""}</b> — ${esc(fixo.nome)}</p>`
+          :`<label>Material *</label><select id="movMaterial" onchange="atualizarSaldoMov()"><option value="">— escolher material —</option>${mats.map(m=>`<option value="${m.uuid}">${esc(m.codigo||"(s/código)")} — ${esc(m.nome)} (saldo ${m.qtd} ${esc(m.unidade||"")})</option>`).join("")}</select>`}
+    <label>Tipo de movimento *</label>
+    <select id="movTipo" onchange="alternarCamposMov();atualizarSaldoMov()">${TIPOS_MOV.map(t=>`<option${t===presetTipo?" selected":""}>${t}</option>`).join("")}</select>
+    <p id="movSaldoInfo" style="font-size:13.5px;color:var(--cinza);margin:6px 0"></p>
+    <div id="movCampoQtd"><label id="movQtdLabel">Quantidade *</label><input id="movQtd" type="number" min="0" step="0.01" placeholder="ex.: 10"></div>
+    <div id="movCampoTransf" style="display:none">
+      <label>Nova localização</label><input id="movDestLocal" placeholder="ex.: Corredor B, Prateleira 3">
+      <label>Nova área</label><select id="movDestArea">${AREAS.filter(a=>pode.moverStock(a)).map(a=>`<option>${a}</option>`).join("")}</select>
+      <label>Novo responsável</label><input id="movDestResp">
+    </div>
+    <label>Documento / referência</label><input id="movDoc" placeholder="ex.: Guia GT-2026-123, Requisição nº…">
+    <label>Motivo / observação</label><textarea id="movMotivo" rows="2"></textarea>
+    <label>Fotografia (opcional)</label><input id="movFoto" type="file" accept="image/*" capture="environment" onchange="carregarFotoMov(this)"><img id="movFotoPrev" class="fotoPrev" style="display:none">
+    <div class="acoesForm"><button class="btn" onclick="confirmarMovStock()">Registar movimento</button><button class="btn-sec" onclick="fecharModal()">Cancelar</button></div>`;
+  document.getElementById("modalDet").classList.add("aberto");
+  alternarCamposMov(); atualizarSaldoMov();
+}
+function movStockRapido(u,tipo){ abrirMovStock(u,tipo); }
+function alternarCamposMov(){
+  const t=document.getElementById("movTipo").value;
+  document.getElementById("movCampoQtd").style.display = t==="Transferência"?"none":"block";
+  document.getElementById("movCampoTransf").style.display = t==="Transferência"?"block":"none";
+  const lbl=document.getElementById("movQtdLabel"); if(lbl)lbl.textContent = t==="Ajuste"?"Quantidade contada (novo saldo) *":"Quantidade *";
+}
+async function atualizarSaldoMov(){
+  const m=await selMaterialMov(); const info=document.getElementById("movSaldoInfo"); if(!info)return;
+  if(!m){info.textContent="";return;}
+  info.innerHTML=`Saldo atual: <b>${m.qtd} ${esc(m.unidade||"")}</b> · Localização: ${esc(m.local)||"—"} · Área: ${esc(m.area)}`;
+  const da=document.getElementById("movDestArea"); if(da&&m.area)da.value=m.area;
+  const dl=document.getElementById("movDestLocal"); if(dl&&!dl.value)dl.value=m.local||"";
+  const dr=document.getElementById("movDestResp"); if(dr&&!dr.value)dr.value=m.responsavel||"";
+}
+async function carregarFotoMov(input){ if(!input.files[0])return; fotoMovTemp=await redimensionarImagem(input.files[0],800); const p=document.getElementById("movFotoPrev"); p.src=fotoMovTemp; p.style.display="block"; }
+async function confirmarMovStock(){
+  const m=await selMaterialMov();
+  if(!m){flash("Escolha o material.");return;}
+  const tipo=document.getElementById("movTipo").value;
+  const motivo=(document.getElementById("movMotivo").value||"").trim();
+  const documento=(document.getElementById("movDoc").value||"").trim();
+  let qtd=null, dest={};
+  if(tipo==="Transferência"){
+    const destLocal=(document.getElementById("movDestLocal").value||"").trim();
+    const destArea=document.getElementById("movDestArea").value;
+    const destResp=(document.getElementById("movDestResp").value||"").trim();
+    if(destLocal===(m.local||"")&&destArea===m.area&&destResp===(m.responsavel||"")){flash("Indique um destino diferente (localização, área ou responsável).");return;}
+    dest={destinoLocal:destLocal,destinoArea:destArea,destinoResp:destResp};
+    qtd=Number(m.qtd)||0;
+  }else{
+    const val=Number(document.getElementById("movQtd").value);
+    if(tipo==="Ajuste"){ if(isNaN(val)||val<0){flash("Indique a quantidade contada (novo saldo).");return;} qtd=val; }
+    else{
+      if(!val||val<=0){flash("Indique uma quantidade válida.");return;}
+      if(tipo==="Saída"&&val>(Number(m.qtd)||0)){flash("A saída ("+val+") excede o saldo atual ("+m.qtd+" "+(m.unidade||"")+"). Use um Ajuste se o saldo estiver errado.");return;}
+      qtd=val;
+    }
+  }
+  const ts=agora();
+  const depois = tipo==="Transferência"?(Number(m.qtd)||0):calcSaldoLocal(Number(m.qtd)||0,tipo,qtd);
+  const rec={uuid:novoUuid(),materialUuid:m.uuid,codigo:m.codigo,nome:m.nome,tipo,qtd,
+    unidade:m.unidade||"un",area:m.area,responsavel:m.responsavel||"",motivo,documento,foto:fotoMovTemp||null,
+    usuario:sessao.nome,data:ts,atualizadoEm:ts,apagado:0,estornoDe:null,qtdAntes:Number(m.qtd)||0,qtdDepois:depois,...dest};
+  const m2={...m,qtd:depois};
+  if(tipo==="Transferência"){ if(dest.destinoLocal!=="")m2.local=dest.destinoLocal; if(dest.destinoArea)m2.area=dest.destinoArea; if(dest.destinoResp!=="")m2.responsavel=dest.destinoResp; }
+  await dbPut("materiais",m2);              // otimista: saldo local sem fila (o servidor é autoritativo)
+  await guardarEEnviar("movstock",rec);
+  fotoMovTemp=null;
+  fecharModal(); flash("Movimento registado. Saldo: "+depois+" "+(m.unidade||""));
+  renderMovstock();
+  if(document.getElementById("v-materiais").classList.contains("ativa"))renderMateriais();
+  if(document.getElementById("v-dashboard").classList.contains("ativa"))renderDashboard();
+}
+
+async function estornarMov(uuid){
+  const todos=(await dbAll("movstock")).filter(x=>!x.apagado);
+  const orig=todos.find(x=>x.uuid===uuid);
+  if(!orig)return;
+  if(!pode.aprovar(orig.area)){flash("Sem permissão para estornar este movimento.");return;}
+  if(orig.tipo==="Transferência"){flash("Para reverter uma transferência, registe uma nova transferência para a origem.");return;}
+  if(orig.estornoDe){flash("Um estorno não pode ser estornado.");return;}
+  if(todos.some(x=>x.estornoDe===uuid)){flash("Este movimento já foi estornado.");return;}
+  if(!confirm("Estornar este movimento?\n\n"+orig.tipo+": "+(orig.tipo==="Ajuste"?("→ "+orig.qtdDepois):orig.qtd)+"\n\nSerá criado um movimento de correção que repõe o saldo. O histórico é mantido.")) return;
+  const m=await dbGet("materiais",orig.materialUuid); if(!m)return;
+  const base={uuid:novoUuid(),materialUuid:orig.materialUuid,codigo:m.codigo,nome:m.nome,unidade:m.unidade||"un",
+    area:m.area,responsavel:m.responsavel||"",motivo:"Estorno de "+orig.tipo+(orig.documento?(" (doc "+orig.documento+")"):""),
+    documento:orig.documento||"",foto:null,usuario:sessao.nome,data:agora(),atualizadoEm:agora(),apagado:0,estornoDe:orig.uuid};
+  let rec;
+  if(orig.tipo==="Entrada"||orig.tipo==="Devolução") rec={...base,tipo:"Saída",qtd:Number(orig.qtd)||0};
+  else if(orig.tipo==="Saída") rec={...base,tipo:"Entrada",qtd:Number(orig.qtd)||0};
+  else rec={...base,tipo:"Ajuste",qtd:Number(orig.qtdAntes)||0}; // Ajuste: repor o saldo anterior
+  const depois=calcSaldoLocal(Number(m.qtd)||0,rec.tipo,rec.qtd);
+  rec.qtdAntes=Number(m.qtd)||0; rec.qtdDepois=depois;
+  await dbPut("materiais",{...m,qtd:depois});
+  await guardarEEnviar("movstock",rec);
+  flash("Movimento estornado. Saldo: "+depois+" "+(m.unidade||""));
+  if(document.getElementById("modalDet").classList.contains("aberto"))fichaKardex(orig.materialUuid);
+  renderMovstock();
+  if(document.getElementById("v-materiais").classList.contains("ativa"))renderMateriais();
+}
+
+async function fichaKardex(u){
+  const m=await dbGet("materiais",u);
+  if(!m){flash("Material não encontrado.");return;}
+  const movs=(await dbAll("movstock")).filter(x=>!x.apagado&&x.materialUuid===u).sort((a,b)=>String(a.data||"").localeCompare(String(b.data||"")));
+  const estornados=new Set(movs.filter(x=>x.estornoDe).map(x=>x.estornoDe));
+  const abertura = movs.length?(Number(movs[0].qtdAntes)||0):(Number(m.qtd)||0);
+  const sup=["admin","responsavel"].includes(sessao.perfil);
+  const linhas = movs.length? movs.map(x=>{
+    const delta=(x.tipo==="Entrada"||x.tipo==="Devolução")?`<span class="movDelta pos">+${x.qtd}</span>`:x.tipo==="Saída"?`<span class="movDelta neg">−${x.qtd}</span>`:x.tipo==="Ajuste"?`→ ${x.qtdDepois}`:"—";
+    const podeEst=pode.aprovar(x.area)&&!x.estornoDe&&x.tipo!=="Transferência"&&!estornados.has(x.uuid);
+    return `<tr>
+      <td style="white-space:nowrap">${dataHoraPT(x.data)}</td>
+      <td><span class="chipMov ${chipMov(x.tipo)}">${esc(x.tipo)}</span>${x.estornoDe?' <span class="etiqueta et-cinza">estorno</span>':""}${estornados.has(x.uuid)?' <span class="etiqueta et-cinza">estornado</span>':""}</td>
+      <td style="text-align:right;white-space:nowrap">${delta}</td>
+      <td style="text-align:right;white-space:nowrap"><b>${x.qtdDepois!=null?x.qtdDepois:"—"}</b></td>
+      <td>${esc(x.documento)||"—"}</td>
+      <td>${esc(x.motivo)||"—"}</td>
+      <td>${esc(x.usuario)||"—"}</td>
+      ${sup?`<td>${podeEst?`<button class="btn-sec btn-mini" onclick="estornarMov('${x.uuid}')">Estornar</button>`:""}</td>`:""}
+    </tr>`;
+  }).join("") : `<tr><td colspan="${sup?8:7}" style="text-align:center;color:var(--cinza)">Sem movimentos registados. O saldo atual é o saldo de abertura.</td></tr>`;
+  document.getElementById("modalConteudo").innerHTML=`
+    <h3>Ficha de armazém — ${esc(m.codigo)||esc(m.nome)}</h3>
+    <div class="kardexTopo"><span>${esc(m.nome)} · ${esc(m.area)}</span><span class="kardexSaldo">Saldo: ${m.qtd} ${esc(m.unidade||"")}</span><span style="color:var(--cinza);font-size:13px">Abertura: ${abertura} ${esc(m.unidade||"")}</span></div>
+    <div class="tabelaScroll"><table><thead><tr><th>Data</th><th>Tipo</th><th style="text-align:right">Qtd</th><th style="text-align:right">Saldo</th><th>Documento</th><th>Motivo</th><th>Utilizador</th>${sup?"<th></th>":""}</tr></thead><tbody>${linhas}</tbody></table></div>
+    <div class="acoesForm">
+      ${pode.moverStock(m.area)?`<button class="btn-verde" onclick="movStockRapido('${u}','Entrada')">+ Entrada</button><button class="btn-vermelho" onclick="movStockRapido('${u}','Saída')">− Saída</button><button class="btn-sec" onclick="movStockRapido('${u}','Ajuste')">Ajuste</button>`:""}
+      <button class="btn-sec" onclick="imprimirKardex('${u}')">Imprimir / PDF</button>
+      <button class="btn-sec" onclick="fecharModal()">Fechar</button>
+    </div>`;
+  document.getElementById("modalDet").classList.add("aberto");
+}
+async function imprimirKardex(u){
+  const m=await dbGet("materiais",u);
+  const movs=(await dbAll("movstock")).filter(x=>!x.apagado&&x.materialUuid===u).sort((a,b)=>String(a.data||"").localeCompare(String(b.data||"")));
+  const abertura = movs.length?(Number(movs[0].qtdAntes)||0):(Number(m.qtd)||0);
+  const linhas=movs.map(x=>{
+    const ent=(x.tipo==="Entrada"||x.tipo==="Devolução")?x.qtd:"";
+    const sai=(x.tipo==="Saída")?x.qtd:"";
+    const aj=(x.tipo==="Ajuste")?("→ "+x.qtdDepois):(x.tipo==="Transferência"?"transferência":"");
+    return `<tr><td>${dataHoraPT(x.data)}</td><td>${esc(x.tipo)}</td><td class="r">${ent}</td><td class="r">${sai}</td><td>${esc(aj)}</td><td class="r"><b>${x.qtdDepois!=null?x.qtdDepois:""}</b></td><td>${esc(x.documento)||""}</td><td>${esc(x.motivo)||""}</td><td>${esc(x.usuario)||""}</td></tr>`;
+  }).join("");
+  const w=window.open("","_blank");
+  w.document.write(`<html><head><title>Ficha de armazém — ${esc(m.codigo)||""}</title><style>
+    body{font-family:Segoe UI,Arial,sans-serif;padding:14mm;color:#1C2733}
+    h1{color:#0E2A47;font-size:16pt;margin:0 0 2mm} .sub{color:#555;font-size:9pt;margin-bottom:5mm}
+    table{width:100%;border-collapse:collapse;font-size:9pt} th{background:#0E2A47;color:#fff;text-align:left;padding:4px 6px}
+    td{border-top:1px solid #ccc;padding:4px 6px} .r{text-align:right}
+    .saldo{font-size:12pt;font-weight:700;color:#0E2A47;margin:4mm 0}
+  </style></head><body>
+    <h1>Ficha de armazém (kardex)</h1>
+    <div class="sub">SONANGOL D&C — Terminal Oceânico do Namibe · emitido em ${new Date().toLocaleString("pt-PT")}</div>
+    <div><b>${esc(m.codigo)||""}</b> — ${esc(m.nome)} · Área: ${esc(m.area)} · Unidade: ${esc(m.unidade||"")}</div>
+    <div class="saldo">Saldo atual: ${m.qtd} ${esc(m.unidade||"")} · Saldo de abertura: ${abertura}</div>
+    <table><thead><tr><th>Data</th><th>Tipo</th><th class="r">Entrada</th><th class="r">Saída</th><th>Ajuste</th><th class="r">Saldo</th><th>Documento</th><th>Motivo</th><th>Utilizador</th></tr></thead>
+    <tbody>${linhas||'<tr><td colspan="9">Sem movimentos registados.</td></tr>'}</tbody></table>
+    <script>onload=()=>print()<\/script></body></html>`);
+  w.document.close();
+}
+
+
+/* ================= PAGINAÇÃO ================= */
+const PAG={};
+function estadoPag(chave){ if(!PAG[chave])PAG[chave]={pag:1,tam:Number(localStorage.pagTam)||50,assin:""}; return PAG[chave]; }
+function aplicarPaginacao(chave,lista,assinatura){
+  const st=estadoPag(chave);
+  if(assinatura!==undefined&&assinatura!==st.assin){st.assin=assinatura;st.pag=1;}
+  const total=lista.length, tam=st.tam, nPags=Math.max(1,Math.ceil(total/tam));
+  if(st.pag>nPags)st.pag=nPags; if(st.pag<1)st.pag=1;
+  const ini=(st.pag-1)*tam, fim=Math.min(total,ini+tam);
+  return {slice:lista.slice(ini,fim),ini,fim,total,nPags,pag:st.pag,tam};
+}
+function barraPaginacao(chave,info){
+  if(!info||info.total===0)return "";
+  const {pag,nPags,ini,fim,total,tam}=info;
+  const selTam=`<span class="pagTam">Por página: <select onchange="mudarTamPag('${chave}',this.value)">${[25,50,100,200].map(n=>`<option${n===tam?" selected":""}>${n}</option>`).join("")}</select></span>`;
+  if(nPags<=1) return `<div class="paginacao"><span class="pagInfo">${total} ${total===1?"registo":"registos"}</span>${selTam}</div>`;
+  const b=(rot,alvo,dis,ativo)=>`<button class="btnPag${ativo?" ativo":""}" ${dis?"disabled":""} onclick="irPag('${chave}',${alvo})">${rot}</button>`;
+  const set=new Set([1,nPags,pag,pag-1,pag+1]);
+  const ord=[...set].filter(p=>p>=1&&p<=nPags).sort((a,b)=>a-b);
+  let nums="",prev=0;
+  for(const p of ord){ if(p-prev>1)nums+='<span class="pagReticencias">…</span>'; nums+=b(p,p,false,p===pag); prev=p; }
+  return `<div class="paginacao"><span class="pagInfo">${ini+1}–${fim} de ${total}</span><span class="pagCtrl">${b("‹",pag-1,pag<=1,false)}${nums}${b("›",pag+1,pag>=nPags,false)}</span>${selTam}</div>`;
+}
+function irPag(chave,n){ const st=estadoPag(chave); st.pag=n; refrescarChavePag(chave); scrollTopVista(); }
+function mudarTamPag(chave,v){ const st=estadoPag(chave); st.tam=Number(v)||50; st.pag=1; try{localStorage.pagTam=st.tam;}catch(e){} refrescarChavePag(chave); scrollTopVista(); }
+function refrescarChavePag(chave){
+  if(chave==="materiais")renderMateriais();
+  else if(chave==="movstock")renderMovstock();
+  else if(chave==="descartes")renderDescartes();
+  else if(chave==="relatorio")renderRelatorio();
+  else if(chave==="leilao")renderLeilao();
+  else if(chave==="logins")renderUsers();
+  else if(chave==="auditoria")renderUsers();
+}
+function scrollTopVista(){ try{window.scrollTo({top:0,behavior:"smooth"});}catch(e){window.scrollTo(0,0);} }
+window.addEventListener("scroll",()=>{ const b=document.getElementById("btnTopo"); if(b)b.style.display=window.scrollY>500?"flex":"none"; });
+
+iniciar();
+</script>
+
+<script>
+/* ===== Ressincronizacao completa (correcao de cache local desatualizada) ===== */
+/* Botao "Ressincronizar tudo": envia alteracoes pendentes e volta a descarregar */
+/* todos os dados do servidor, substituindo a copia local deste dispositivo.      */
+window.forcarSincronizacaoCompleta = async function(){
+  const msg = 'Ressincronizar tudo?\n\nEnvia primeiro as suas alteracoes pendentes e depois volta a descarregar todos os dados do servidor, substituindo a copia local deste dispositivo.';
+  if(!confirm(msg)) return;
+  try{
+    if(typeof flash === 'function') flash('A ressincronizar. Aguarde...');
+    if(typeof sincronizar === 'function'){ try{ await sincronizar(true); }catch(e){} }
+    const tk = localStorage.getItem('token');
+    const resp = await fetch('/api/sync', { method:'POST', headers:{ 'Content-Type':'application/json', 'Authorization':'Bearer ' + tk }, body: JSON.stringify({ desde:'1970-01-01T00:00:00.000Z', alteracoes: [] }) });
+    if(!resp.ok) throw new Error('O servidor respondeu ' + resp.status);
+    const j = await resp.json();
+    const dados = j.dados || {};
+    const db = await new Promise((res,rej)=>{ const r = indexedDB.open('inventario_ton_v2'); r.onsuccess=()=>res(r.result); r.onerror=()=>rej(r.error); });
+    const tabelas = ['materiais','descartes','movimentos','notificacoes','lances','leiloes','movstock'];
+    for(const t of tabelas){
+      if(!db.objectStoreNames.contains(t)) continue;
+      if(!Array.isArray(dados[t])) continue;
+      const registos = dados[t];
+      await new Promise((res,rej)=>{
+        const tx = db.transaction(t,'readwrite'); const store = tx.objectStore(t);
+        const clr = store.clear();
+        clr.onsuccess = ()=>{ for(const reg of registos){ try{ store.put(reg); }catch(e){} } };
+        tx.oncomplete = ()=>res(); tx.onerror = ()=>rej(tx.error);
+      });
+    }
+    const agora = j.agora || new Date().toISOString();
+    Object.keys(localStorage).filter(k => k.indexOf('ultimoSync') === 0).forEach(k => localStorage.setItem(k, agora));
+    if(typeof flash === 'function') flash('Ressincronizacao concluida.');
+    location.reload();
+  }catch(e){ alert('Falha na ressincronizacao: ' + (e && e.message ? e.message : e)); }
+};
+(function(){
+  function injetar(){
+    if(document.getElementById('btnRessincTudo')) return;
+    const alvo = [...document.querySelectorAll('button')].find(b => (b.getAttribute('onclick')||'').indexOf('sincronizar(true)') >= 0 && (b.textContent||'').toLowerCase().indexOf('sincronizar agora') >= 0);
+    if(!alvo) return;
+    const b = document.createElement('button');
+    b.id = 'btnRessincTudo'; b.className = alvo.className; b.textContent = 'Ressincronizar tudo';
+    b.setAttribute('onclick', 'forcarSincronizacaoCompleta()'); b.style.marginLeft = '6px';
+    alvo.insertAdjacentElement('afterend', b);
+  }
+  if(document.readyState !== 'loading') injetar(); else document.addEventListener('DOMContentLoaded', injetar);
+  setInterval(injetar, 2000);
+})();
+</script>
+</body>
+</html>
