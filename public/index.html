@@ -2139,5 +2139,54 @@ window.addEventListener("scroll",()=>{ const b=document.getElementById("btnTopo"
 
 iniciar();
 </script>
+
+<script>
+/* ===== Ressincronizacao completa (correcao de cache local desatualizada) ===== */
+/* Botao "Ressincronizar tudo": envia alteracoes pendentes e volta a descarregar */
+/* todos os dados do servidor, substituindo a copia local deste dispositivo.      */
+window.forcarSincronizacaoCompleta = async function(){
+  const msg = 'Ressincronizar tudo?\n\nEnvia primeiro as suas alteracoes pendentes e depois volta a descarregar todos os dados do servidor, substituindo a copia local deste dispositivo.';
+  if(!confirm(msg)) return;
+  try{
+    if(typeof flash === 'function') flash('A ressincronizar. Aguarde...');
+    if(typeof sincronizar === 'function'){ try{ await sincronizar(true); }catch(e){} }
+    const tk = localStorage.getItem('token');
+    const resp = await fetch('/api/sync', { method:'POST', headers:{ 'Content-Type':'application/json', 'Authorization':'Bearer ' + tk }, body: JSON.stringify({ desde:'1970-01-01T00:00:00.000Z', alteracoes: [] }) });
+    if(!resp.ok) throw new Error('O servidor respondeu ' + resp.status);
+    const j = await resp.json();
+    const dados = j.dados || {};
+    const db = await new Promise((res,rej)=>{ const r = indexedDB.open('inventario_ton_v2'); r.onsuccess=()=>res(r.result); r.onerror=()=>rej(r.error); });
+    const tabelas = ['materiais','descartes','movimentos','notificacoes','lances','leiloes','movstock'];
+    for(const t of tabelas){
+      if(!db.objectStoreNames.contains(t)) continue;
+      if(!Array.isArray(dados[t])) continue;
+      const registos = dados[t];
+      await new Promise((res,rej)=>{
+        const tx = db.transaction(t,'readwrite'); const store = tx.objectStore(t);
+        const clr = store.clear();
+        clr.onsuccess = ()=>{ for(const reg of registos){ try{ store.put(reg); }catch(e){} } };
+        tx.oncomplete = ()=>res(); tx.onerror = ()=>rej(tx.error);
+      });
+    }
+    const agora = j.agora || new Date().toISOString();
+    Object.keys(localStorage).filter(k => k.indexOf('ultimoSync') === 0).forEach(k => localStorage.setItem(k, agora));
+    if(typeof flash === 'function') flash('Ressincronizacao concluida.');
+    location.reload();
+  }catch(e){ alert('Falha na ressincronizacao: ' + (e && e.message ? e.message : e)); }
+};
+(function(){
+  function injetar(){
+    if(document.getElementById('btnRessincTudo')) return;
+    const alvo = [...document.querySelectorAll('button')].find(b => (b.getAttribute('onclick')||'').indexOf('sincronizar(true)') >= 0 && (b.textContent||'').toLowerCase().indexOf('sincronizar agora') >= 0);
+    if(!alvo) return;
+    const b = document.createElement('button');
+    b.id = 'btnRessincTudo'; b.className = alvo.className; b.textContent = 'Ressincronizar tudo';
+    b.setAttribute('onclick', 'forcarSincronizacaoCompleta()'); b.style.marginLeft = '6px';
+    alvo.insertAdjacentElement('afterend', b);
+  }
+  if(document.readyState !== 'loading') injetar(); else document.addEventListener('DOMContentLoaded', injetar);
+  setInterval(injetar, 2000);
+})();
+</script>
 </body>
 </html>
